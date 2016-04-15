@@ -108,7 +108,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 	              tokenRespDTO.setExpiresIn(expireTime / 1000L);
 	              tokenRespDTO.setExpiresInMillis(expireTime);
 	              if (log.isDebugEnabled()) {
-	                log.debug("Access Token info retrieved from the cache and served to client with client id : " + oAuth2AccessTokenReqDTO.getClientId());
+	                log.debug("Access token info retrieved from the cache and served to client with client id : " + oAuth2AccessTokenReqDTO.getClientId());
 	              }
 	              return tokenRespDTO;
 	            }
@@ -137,7 +137,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 	          if (this.cacheEnabled)
 	          {
 	            if (log.isDebugEnabled()) {
-	              log.debug("Access Token info was added to the cache for the client id : " + oAuth2AccessTokenReqDTO.getClientId());
+	              log.debug("Access token info was added to the cache for the client id : " + oAuth2AccessTokenReqDTO.getClientId());
 	            }
 	            this.oauthCache.addToCache(cacheKey, accessTokenDO);
 	          }
@@ -195,14 +195,14 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 	      this.tokenMgtDAO.storeAccessToken(accessToken, oAuth2AccessTokenReqDTO.getClientId(), accessTokenDO, userStoreDomain);
 	      
 	      if (log.isDebugEnabled()) {
-	        log.debug("Persisted an access token with Client id : " + oAuth2AccessTokenReqDTO.getClientId() + " authorized user : " + tokReqMsgCtx.getAuthorizedUser() + " timestamp : " + timestamp + " validity period : " + validityPeriod + " scope : " + OAuth2Util.buildScopeString(tokReqMsgCtx.getScope()) + " Token State : " + "ACTIVE");
+	        log.debug("Stored access token with client id : " + oAuth2AccessTokenReqDTO.getClientId() + " authorized user : " + tokReqMsgCtx.getAuthorizedUser() + " timestamp : " + timestamp + " validity period : " + validityPeriod + " scope : " + OAuth2Util.buildScopeString(tokReqMsgCtx.getScope()) + " token State : " + "ACTIVE");
 	      }
 	      
 	      if (this.cacheEnabled)
 	      {
 	        this.oauthCache.addToCache(cacheKey, accessTokenDO);
 	        if (log.isDebugEnabled()) {
-	          log.debug("Access Token info was added to the cache for the client id : " + oAuth2AccessTokenReqDTO.getClientId());
+	          log.debug("Access token info was added to the cache for the client id : " + oAuth2AccessTokenReqDTO.getClientId());
 	        }
 	      }
 	      OAuth2AccessTokenRespDTO tokenRespDTO = new OAuth2AccessTokenRespDTO();
@@ -210,7 +210,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 	      tokenRespDTO.setExpiresIn(OAuth2Util.getTokenExpireTimeMillis(accessTokenDO) / 1000L);
 	      
 	      if (log.isDebugEnabled()) {
-			    log.debug("Returned access token to client");
+			    log.debug("Returned access token to client : " + tokenRespDTO.getAccessToken());
 			}
 	      
 	      return tokenRespDTO;
