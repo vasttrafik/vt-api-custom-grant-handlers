@@ -3,22 +3,22 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.vasttrafik.se.api</groupId>
   <artifactId>vt-api-custom-grant-handlers</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <name>vt-api-custom-grant-handlers</name>
   <description>vt-api-custom-grant-handlers</description>
   <packaging>jar</packaging>
   
   <dependencies>
 	<dependency>
-		<groupId>org.wso2.carbon</groupId>
-		<artifactId>org.wso2.carbon.identity.oauth</artifactId>
-		<version>4.2.4</version>
+        <groupId>org.wso2.carbon.identity</groupId>
+        <artifactId>org.wso2.carbon.identity.oauth</artifactId>
+		<version>5.0.7</version>
 		<scope>provided</scope>
-	</dependency>
+    </dependency>
 	<dependency>
-		<groupId>org.wso2.carbon</groupId>
+		<groupId>org.wso2.carbon.apimgt</groupId>
 		<artifactId>org.wso2.carbon.apimgt.keymgt</artifactId>
-		<version>1.2.3</version>
+		<version>5.0.3</version>
 		<scope>provided</scope>
 	</dependency>
 	<dependency>
