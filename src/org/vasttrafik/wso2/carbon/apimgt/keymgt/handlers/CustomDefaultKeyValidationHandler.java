@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.vasttrafik.cache.properties.CacheProperties;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
@@ -61,16 +60,12 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
         actualVersion = actualVersion.split("_default_")[1];
       }
 
-      if (log.isDebugEnabled())
-        log.debug("Checking if " + validationContext.getContext() + "/" + actualVersion + " exists in cache properties in order to convert Access Token DO to Validation Info DTO");
-
-      if (CacheProperties.containsContextVersion(validationContext.getContext() + "/" + actualVersion) && OAuthServerConfiguration.getInstance().isCacheEnabled()) {
+      if (APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
         if (log.isDebugEnabled())
-          log.debug("Context and version found in cache properties. Attempting to lookup cached Access Token DO for context version: " + validationContext.getContext() + "/" + actualVersion
-              + " in oAuthCache");
+          log.debug("Checking if " + validationContext.getAccessToken() + " token exists in cache properties in order to convert Access Token DO to Validation Info DTO");
 
-        AccessTokenDO accessTokenDO =
-            (AccessTokenDO) OAuthCache.getInstance().getValueFromCache(new OAuthCacheKey(validationContext.getContext() + "/" + actualVersion + validationContext.getAccessToken()));
+
+        AccessTokenDO accessTokenDO = (AccessTokenDO) OAuthCache.getInstance().getValueFromCache(new OAuthCacheKey(validationContext.getAccessToken()));
         if (accessTokenDO != null) {
           if (log.isDebugEnabled())
             log.debug("Found cached Access Token DO in oAuth cache. Converting to Validation Info DTO");
@@ -104,20 +99,17 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
 
           return true;
         }
+
       }
 
       if (log.isDebugEnabled())
-        log.debug("No match found in oAuth cache for (" + validationContext.getContext() + "/" + actualVersion + validationContext.getAccessToken() + ") , returning to normal handling");
+        log.debug("No match found in oAuth cache for " + validationContext.getAccessToken() + " token, returning to normal handling");
 
-      if (log.isDebugEnabled())
-        log.debug("Checking if " + validationContext.getContext() + "/" + actualVersion + " exists in cache properties in order to use it for token validation");
-      if (CacheProperties.containsContextVersion(validationContext.getContext() + "/" + actualVersion) && APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
-        if (log.isDebugEnabled()) {
-          log.debug("Context and version found in cache properties. Attempting to lookup cached Access Token DO for key: " + validationContext.getContext() + "/" + actualVersion
-              + validationContext.getAccessToken() + " in key cache");
-        }
+      if (APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
+        if (log.isDebugEnabled())
+          log.debug("Checking if " + validationContext.getAccessToken() + " exists in cache properties in order to use it for token validation");
 
-        APIKeyValidationInfoDTO infoDTO = APIKeyMgtUtil.getFromKeyManagerCache((validationContext.getContext() + "/" + actualVersion + validationContext.getAccessToken()));
+        APIKeyValidationInfoDTO infoDTO = APIKeyMgtUtil.getFromKeyManagerCache(validationContext.getAccessToken());
 
         if (infoDTO != null) {
           if (log.isDebugEnabled())
@@ -155,11 +147,11 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
         apiKeyValidationInfoDTO.setScopes(scopeSet);
       }
 
-      if (tokenInfo.isTokenValid() && CacheProperties.containsContextVersion(validationContext.getContext() + actualVersion) && APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
+      if (tokenInfo.isTokenValid() && APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
         if (log.isDebugEnabled())
-          log.debug("Putting API Key Validation DTO in cache for cache key: " + validationContext.getContext() + "/" + actualVersion + tokenInfo.getAccessToken());
+          log.debug("Putting API Key Validation DTO in cache for cache key: " + tokenInfo.getAccessToken());
 
-        APIKeyMgtUtil.writeToKeyManagerCache((validationContext.getContext() + "/" + actualVersion + tokenInfo.getAccessToken()), apiKeyValidationInfoDTO);
+        APIKeyMgtUtil.writeToKeyManagerCache(tokenInfo.getAccessToken(), apiKeyValidationInfoDTO);
       }
 
     } catch (APIManagementException e) {
@@ -254,9 +246,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
         actualVersion = actualVersion.split("_default_")[1];
       }
 
-      if (log.isDebugEnabled())
-        log.debug("Checking if " + validationContext.getContext() + "/" + actualVersion + " for consumer key " + dto.getConsumerKey() + " exists in cache properties in order to retrieve it for subscription check");
-      if (CacheProperties.containsConsumerKey(dto.getConsumerKey()) && CacheProperties.containsContextVersion(validationContext.getContext() + "/" + actualVersion) && APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
+      if (APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
         if (log.isDebugEnabled()) {
           log.debug("Looking up API Key Validation Info DTO in in key cache for key: " + validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey());
         }
@@ -290,9 +280,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
          * validationContext.getClientDomain());
          */
 
-        if (log.isDebugEnabled())
-          log.debug("Checking if " + validationContext.getContext() + "/" + actualVersion + " for consumer key " + dto.getConsumerKey() + " exists in cache properties in order to store it in cache");
-        if (CacheProperties.containsConsumerKey(dto.getConsumerKey()) && CacheProperties.containsContextVersion(validationContext.getContext() + "/" + actualVersion) && APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
+        if (APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
           if (log.isDebugEnabled())
             log.debug("Putting subscription DTO in cache for cache key: " + validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey());
 

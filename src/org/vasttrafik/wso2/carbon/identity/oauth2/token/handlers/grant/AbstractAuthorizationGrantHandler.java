@@ -10,7 +10,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.as.issuer.OAuthIssuer;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
-import org.vasttrafik.cache.properties.CacheProperties;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.cache.AppInfoCache;
@@ -155,20 +154,11 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
           }
           if (this.cacheEnabled) {
             this.oauthCache.addToCache(cacheKey, existingAccessTokenDO);
+            /* Make it possible to lookup TokenDO from Token value */
+            this.oauthCache.addToCache(new OAuthCacheKey(existingAccessTokenDO.getAccessToken()), existingAccessTokenDO);
+            
             if (log.isDebugEnabled()) {
               log.debug("Access Token info was added to the cache for the cache key : " + cacheKey.getCacheKeyString());
-            }
-            
-            List<String> contextVersions;
-            if ((contextVersions = CacheProperties.getContextVersions(consumerKey)) != null) {
-              if (log.isDebugEnabled()) {
-                log.debug("Consumer key cache property found, adding token for " + existingAccessTokenDO.getAccessToken() + " and " + contextVersions.size() + " number of context versions ");
-              }
-
-              for(String contextVersion : contextVersions) {
-                this.oauthCache.addToCache(new OAuthCacheKey(contextVersion + existingAccessTokenDO.getAccessToken()), existingAccessTokenDO);
-              }
-
             }
           }
           return tokenRespDTO;
@@ -220,30 +210,16 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
       newAccessTokenDO.setTenantID(OAuth2Util.getTenantId(tenantDomain));
       newAccessTokenDO.setTokenId(UUID.randomUUID().toString());
       newAccessTokenDO.setGrantType(grantType);
-
-      List<String> contextVersions;
-      if (this.cacheEnabled && (contextVersions = CacheProperties.getContextVersions(consumerKey)) != null) {
-        if (log.isDebugEnabled()) {
-          log.debug("Consumer key cache property found, adding token for " + newAccessTokenDO.getAccessToken() + " and " + contextVersions.size() + " number of context versions ");
-        }
-
-        for(String contextVersion : contextVersions) {
-          this.oauthCache.addToCache(new OAuthCacheKey(contextVersion + newAccessTokenDO.getAccessToken()), newAccessTokenDO);
-        }
-        /* Only use cache for lookup. We can safely add the key asynchronously. Important that pool size isn't set to 0 */
-        storeAccessToken(oAuth2AccessTokenReqDTO, userStoreDomain, newAccessTokenDO, newAccessToken, existingAccessTokenDO);
-        
-      } else {
-        /* Write token synchronously to assure it's not possible to ask for a token that doesn't exist yet in next call */
-        persistAccessToken(oAuth2AccessTokenReqDTO, userStoreDomain, newAccessTokenDO, newAccessToken, existingAccessTokenDO);
-      }
       
+      storeAccessToken(oAuth2AccessTokenReqDTO, userStoreDomain, newAccessTokenDO, newAccessToken, existingAccessTokenDO);
       if (log.isDebugEnabled()) {
         log.debug("Persisted Access Token for Client ID : " + oAuth2AccessTokenReqDTO.getClientId() + ", Authorized User : " + tokReqMsgCtx.getAuthorizedUser() + ", Timestamp : " + timestamp
             + ", Validity period (s) : " + newAccessTokenDO.getValidityPeriod() + ", Scope : " + OAuth2Util.buildScopeString(tokReqMsgCtx.getScope()) + " and Token State : " + "ACTIVE");
       }
       if (this.cacheEnabled) {
         this.oauthCache.addToCache(cacheKey, newAccessTokenDO);
+        /* Make it possible to lookup TokenDO from Token value */
+        this.oauthCache.addToCache(new OAuthCacheKey(newAccessTokenDO.getAccessToken()), newAccessTokenDO);
 
         if (log.isDebugEnabled()) {
           log.debug("Access token was added to OAuthCache for cache key : " + cacheKey.getCacheKeyString());
