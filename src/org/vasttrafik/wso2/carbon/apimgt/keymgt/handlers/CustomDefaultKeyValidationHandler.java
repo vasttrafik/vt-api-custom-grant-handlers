@@ -7,7 +7,7 @@ import java.util.Set;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.vasttrafik.org.wso2.carbon.apimgt.keymgt.util.CustomAPIKeyMgtUtil;
+import org.vasttrafik.wso2.carbon.apimgt.keymgt.util.CustomAPIKeyMgtUtil;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;

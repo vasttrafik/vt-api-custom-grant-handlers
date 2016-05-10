@@ -1,4 +1,4 @@
-package org.vasttrafik.org.wso2.carbon.apimgt.keymgt.util;
+package org.vasttrafik.wso2.carbon.apimgt.keymgt.util;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,7 +16,7 @@ public class CustomAPIKeyMgtUtil {
 
   private static final Log log = LogFactory.getLog(CustomAPIKeyMgtUtil.class);
   
-  private  static boolean isKeyCacheInitialized = false;
+  private  static boolean isCustomKeyCacheInitialized = false;
 
   /**
    * Get the KeyValidationInfo object from cache, for a given cache-Key
@@ -80,8 +80,8 @@ public class CustomAPIKeyMgtUtil {
   @SuppressWarnings("rawtypes")
   private static Cache getCustomKeyManagerCache() {
     long apimKeyCacheExpiry = 900L;
-    if (!isKeyCacheInitialized) {
-      isKeyCacheInitialized = true;
+    if (!isCustomKeyCacheInitialized) {
+      isCustomKeyCacheInitialized = true;
       
       CacheImpl cacheImpl = (CacheImpl)Caching.getCacheManager(APIConstants.API_MANAGER_CACHE_MANAGER).createCacheBuilder("customKeyCache")
           .setExpiry(CacheConfiguration.ExpiryType.MODIFIED, new CacheConfiguration.Duration(TimeUnit.SECONDS, apimKeyCacheExpiry))

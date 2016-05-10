@@ -1,4 +1,4 @@
-package org.vasttrafik.org.wso2.carbon.identity.oauth2.dao;
+package org.vasttrafik.wso2.carbon.identity.oauth2.dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
