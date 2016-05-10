@@ -3,22 +3,23 @@ package org.vasttrafik.wso2.carbon.apimgt.keymgt.handlers;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.vasttrafik.org.wso2.carbon.apimgt.keymgt.util.CustomAPIKeyMgtUtil;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
+import org.wso2.carbon.apimgt.impl.token.TokenGenerator;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.APIKeyMgtException;
 import org.wso2.carbon.apimgt.keymgt.handlers.AbstractKeyValidationHandler;
 import org.wso2.carbon.apimgt.keymgt.service.TokenValidationContext;
 import org.wso2.carbon.apimgt.keymgt.util.APIKeyMgtDataHolder;
-import org.wso2.carbon.apimgt.keymgt.util.APIKeyMgtUtil;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
-import org.wso2.carbon.identity.oauth.cache.OAuthCache;
-import org.wso2.carbon.identity.oauth.cache.OAuthCacheKey;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
@@ -34,6 +35,12 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
   }
 
   public boolean validateToken(TokenValidationContext validationContext) throws APIKeyMgtException {
+    
+    StopWatch stopWatch = new StopWatch();
+    
+    if(log.isInfoEnabled()) {
+      stopWatch.start();
+    }
 
     if (log.isDebugEnabled())
       log.debug(validationContext.getContext() + " " + validationContext.getVersion() + " " + validationContext.getAccessToken());
@@ -60,65 +67,30 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
         actualVersion = actualVersion.split("_default_")[1];
       }
 
-      if (APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
-        if (log.isDebugEnabled())
-          log.debug("Checking if " + validationContext.getAccessToken() + " token exists in cache properties in order to convert Access Token DO to Validation Info DTO");
-
-
-        AccessTokenDO accessTokenDO = (AccessTokenDO) OAuthCache.getInstance().getValueFromCache(new OAuthCacheKey(validationContext.getAccessToken()));
-        if (accessTokenDO != null) {
-          if (log.isDebugEnabled())
-            log.debug("Found cached Access Token DO in oAuth cache. Converting to Validation Info DTO");
-
-          tokenInfo = new AccessTokenInfo();
-          tokenInfo.setTokenValid(true);
-          tokenInfo.setEndUserName(accessTokenDO.getAuthzUser().getUserName());
-          tokenInfo.setConsumerKey(accessTokenDO.getConsumerKey());
-          tokenInfo.setValidityPeriod(accessTokenDO.getValidityPeriod() * 1000L);
-          tokenInfo.setIssuedTime((accessTokenDO != null ? accessTokenDO.getIssuedTime().getTime() : System.currentTimeMillis()));
-          tokenInfo.setScope(accessTokenDO.getScope());
-          tokenInfo.setApplicationToken(true);
-
-          validationContext.setTokenInfo(tokenInfo);
-
-          APIKeyValidationInfoDTO apiKeyValidationInfoDTO = new APIKeyValidationInfoDTO();
-          validationContext.setValidationInfoDTO(apiKeyValidationInfoDTO);
-
-          apiKeyValidationInfoDTO.setAuthorized(tokenInfo.isTokenValid());
-          apiKeyValidationInfoDTO.setEndUserName(tokenInfo.getEndUserName());
-          apiKeyValidationInfoDTO.setConsumerKey(tokenInfo.getConsumerKey());
-          apiKeyValidationInfoDTO.setIssuedTime(tokenInfo.getIssuedTime());
-          apiKeyValidationInfoDTO.setValidityPeriod(tokenInfo.getValidityPeriod());
-          if (tokenInfo.getScopes() != null) {
-            Set<String> scopeSet = new HashSet<String>(Arrays.asList(tokenInfo.getScopes()));
-            apiKeyValidationInfoDTO.setScopes(scopeSet);
-          }
-
-          if (log.isDebugEnabled())
-            log.debug("Converted cached Access Token DO to Validation Info DTO, returning");
-
-          return true;
-        }
-
-      }
-
-      if (log.isDebugEnabled())
-        log.debug("No match found in oAuth cache for " + validationContext.getAccessToken() + " token, returning to normal handling");
-
+      
       if (APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
         if (log.isDebugEnabled())
           log.debug("Checking if " + validationContext.getAccessToken() + " exists in cache properties in order to use it for token validation");
 
-        APIKeyValidationInfoDTO infoDTO = APIKeyMgtUtil.getFromKeyManagerCache(validationContext.getAccessToken());
+        APIKeyValidationInfoDTO infoDTO = CustomAPIKeyMgtUtil.getFromKeyManagerCache(validationContext.getAccessToken());
 
         if (infoDTO != null) {
           if (log.isDebugEnabled())
             log.debug("Found API Key Validation Info DTO in key cache, returning");
 
           validationContext.setValidationInfoDTO(infoDTO);
+          
+          if(log.isInfoEnabled()) {
+            stopWatch.stop();
+            log.info("validateToken 2 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());          
+          }
+          
           return true;
         }
       }
+
+      if (log.isDebugEnabled())
+        log.debug("No match found in key cache cache for " + validationContext.getAccessToken() + " token, returning to normal handling");
 
       tokenInfo = KeyManagerHolder.getKeyManagerInstance().getTokenMetaData(validationContext.getAccessToken());
       if (tokenInfo == null) {
@@ -149,19 +121,31 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
 
       if (tokenInfo.isTokenValid() && APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
         if (log.isDebugEnabled())
-          log.debug("Putting API Key Validation DTO in cache for cache key: " + tokenInfo.getAccessToken());
+          log.debug("Putting API Key Validation DTO in cache for cache key: " + validationContext.getAccessToken());
 
-        APIKeyMgtUtil.writeToKeyManagerCache(tokenInfo.getAccessToken(), apiKeyValidationInfoDTO);
+        CustomAPIKeyMgtUtil.writeToKeyManagerCache(validationContext.getAccessToken(), apiKeyValidationInfoDTO);
       }
 
     } catch (APIManagementException e) {
       log.error("Error while obtaining Token Metadata from Authorization Server", e);
       throw new APIKeyMgtException("Error while obtaining Token Metadata from Authorization Server");
     }
+    
+    if(log.isInfoEnabled()) {
+      stopWatch.stop();
+      log.info("validateToken 3 took: " + stopWatch.getTime() + " ms.");      
+    }
+    
     return tokenInfo.isTokenValid();
   }
 
   public boolean validateScopes(TokenValidationContext validationContext) throws APIKeyMgtException {
+    
+    StopWatch stopWatch = new StopWatch();
+    
+    if(log.isInfoEnabled()) 
+      stopWatch.start();
+    
     if (validationContext.isCacheHit()) {
       return true;
     }
@@ -200,6 +184,12 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
     try {
       if (scopeValidator != null) {
         if (scopeValidator.validateScope(accessTokenDO, resource)) {
+          
+          if(log.isInfoEnabled()) {
+            stopWatch.stop();
+            log.info("validateScopes 1 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());
+          }
+          
           return true;
         }
         apiKeyValidationInfoDTO.setAuthorized(false);
@@ -210,10 +200,23 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       apiKeyValidationInfoDTO.setAuthorized(false);
       apiKeyValidationInfoDTO.setValidationStatus(900910);
     }
+    
+    if(log.isInfoEnabled()) {
+      stopWatch.stop();
+      log.info("validateScopes 2 took: " + stopWatch.getTime() + " ms.");      
+    }
+    
     return false;
   }
 
   public boolean validateSubscription(TokenValidationContext validationContext) throws APIKeyMgtException {
+    
+    StopWatch stopWatch = new StopWatch();
+    
+    if(log.isInfoEnabled()) {
+      stopWatch.start();     
+    }
+    
     if ((validationContext == null) || (validationContext.getValidationInfoDTO() == null)) {
       return false;
     }
@@ -251,7 +254,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
           log.debug("Looking up API Key Validation Info DTO in in key cache for key: " + validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey());
         }
 
-        APIKeyValidationInfoDTO infoDTO = APIKeyMgtUtil.getFromKeyManagerCache(validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey());
+        APIKeyValidationInfoDTO infoDTO = CustomAPIKeyMgtUtil.getFromKeyManagerCache(validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey());
 
         if (infoDTO != null) {
           if (log.isDebugEnabled())
@@ -266,6 +269,11 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
           dto.setApplicationName(infoDTO.getApplicationName());
           dto.setApplicationTier(infoDTO.getApplicationTier());
           dto.setType(infoDTO.getType());
+          
+          if(log.isInfoEnabled()) {
+            stopWatch.stop();
+            log.info("validateSubscription 1 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());          
+          }
 
           return true;
         }
@@ -284,7 +292,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
           if (log.isDebugEnabled())
             log.debug("Putting subscription DTO in cache for cache key: " + validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey());
 
-          APIKeyMgtUtil.writeToKeyManagerCache((validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey()), dto);
+          CustomAPIKeyMgtUtil.writeToKeyManagerCache((validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey()), dto);
 
         }
 
@@ -295,6 +303,13 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
     } catch (APIManagementException e) {
       log.error("Error Occurred while validating subscription.", e);
     }
+    
+    
+    if(log.isInfoEnabled()) {
+      stopWatch.stop();
+      log.info("validateSubscription 2 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());      
+    }
+    
     return state;
   }
 
@@ -320,4 +335,35 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
     }
     return true;
   }
+  
+  public boolean generateConsumerToken(TokenValidationContext validationContext)
+      throws APIKeyMgtException
+    {
+    
+    StopWatch stopWatch = new StopWatch();
+    
+    if(log.isInfoEnabled()) {
+      stopWatch.start();     
+    }
+    
+      TokenGenerator generator = APIKeyMgtDataHolder.getTokenGenerator();
+      try
+      {
+        String jwt = generator.generateToken(validationContext.getValidationInfoDTO(), validationContext.getContext(), validationContext.getVersion(), validationContext.getAccessToken());
+        
+        validationContext.getValidationInfoDTO().setEndUserToken(jwt);
+        
+        if(log.isInfoEnabled()) {
+          stopWatch.stop();
+          log.info("generate consumer token took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());      
+        }
+        
+        return true;
+      }
+      catch (APIManagementException e)
+      {
+        log.error("Error occurred while generating JWT. ", e);
+      }
+      return false;
+    }
 }
