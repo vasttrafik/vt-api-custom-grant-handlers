@@ -197,9 +197,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
           if (this.cacheEnabled) {
             this.oauthCache.addToCache(cacheKey, existingAccessTokenDO);
             /* Make it possible to lookup TokenDO from Token value */
-            CustomAPIKeyMgtUtil.writeToKeyManagerCache(existingAccessTokenDO.getAccessToken(), this.convertAccesstokenDOToAPIKeyValidationInfoDTO(existingAccessTokenDO));
-            
-            //this.oauthCache.addToCache(new OAuthCacheKey(existingAccessTokenDO.getAccessToken()), existingAccessTokenDO);
+            CustomAPIKeyMgtUtil.writeToCustomKeyManagerCache(existingAccessTokenDO.getAccessToken(), this.convertAccesstokenDOToAPIKeyValidationInfoDTO(existingAccessTokenDO));
             
             if (log.isDebugEnabled()) {
               log.debug("Access Token info was added to the cache for the cache key : " + cacheKey.getCacheKeyString() + " and " + existingAccessTokenDO.getAccessToken());
@@ -295,10 +293,8 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
         }
         
         /* Make it possible to lookup TokenDO from Token value */
-        CustomAPIKeyMgtUtil.writeToKeyManagerCache(newAccessTokenDO.getAccessToken(), this.convertAccesstokenDOToAPIKeyValidationInfoDTO(newAccessTokenDO));
-        
-        //this.oauthCache.addToCache(new OAuthCacheKey(newAccessTokenDO.getAccessToken()), newAccessTokenDO);
-        
+        CustomAPIKeyMgtUtil.writeToCustomKeyManagerCache(newAccessTokenDO.getAccessToken(), this.convertAccesstokenDOToAPIKeyValidationInfoDTO(newAccessTokenDO));
+
         if(log.isInfoEnabled()) {
           stopWatch.stop();
           builder.append("Putting the APIKeyValidationInfoDTO object in key cache took: " + stopWatch.getTime() + " ms. Size: " );
@@ -332,6 +328,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     }
   }
 
+  /*
   protected void storeAccessToken(OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO, String userStoreDomain, AccessTokenDO newAccessTokenDO, String newAccessToken, AccessTokenDO existingAccessTokenDO)
       throws IdentityOAuth2Exception {
     try {
@@ -339,6 +336,14 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     } catch (IdentityException e) {
       throw new IdentityOAuth2Exception("Error occurred while storing new access token : " + newAccessToken, e);
     }
+  }
+  */
+  
+  protected void storeAccessToken(OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO, String userStoreDomain, AccessTokenDO newAccessTokenDO, String newAccessToken, AccessTokenDO existingAccessTokenDO)
+      throws IdentityOAuth2Exception {
+    
+      newAccessTokenDO.setAccessToken(newAccessToken);   
+      CustomAPIKeyMgtUtil.writeToCustomAccessTokenCache(newAccessToken, newAccessTokenDO);
   }
   
   protected void persistAccessToken(OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO, String userStoreDomain, AccessTokenDO newAccessTokenDO, String newAccessToken, AccessTokenDO existingAccessTokenDO)

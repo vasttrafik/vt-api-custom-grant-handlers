@@ -72,7 +72,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
         if (log.isDebugEnabled())
           log.debug("Checking if " + validationContext.getAccessToken() + " exists in cache properties in order to use it for token validation");
 
-        APIKeyValidationInfoDTO infoDTO = CustomAPIKeyMgtUtil.getFromKeyManagerCache(validationContext.getAccessToken());
+        APIKeyValidationInfoDTO infoDTO = CustomAPIKeyMgtUtil.getFromCustomKeyManagerCache(validationContext.getAccessToken());
 
         if (infoDTO != null) {
           if (log.isDebugEnabled())
@@ -123,7 +123,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
         if (log.isDebugEnabled())
           log.debug("Putting API Key Validation DTO in cache for cache key: " + validationContext.getAccessToken());
 
-        CustomAPIKeyMgtUtil.writeToKeyManagerCache(validationContext.getAccessToken(), apiKeyValidationInfoDTO);
+        CustomAPIKeyMgtUtil.writeToCustomKeyManagerCache(validationContext.getAccessToken(), apiKeyValidationInfoDTO);
       }
 
     } catch (APIManagementException e) {
@@ -254,7 +254,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
           log.debug("Looking up API Key Validation Info DTO in in key cache for key: " + validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey());
         }
 
-        APIKeyValidationInfoDTO infoDTO = CustomAPIKeyMgtUtil.getFromKeyManagerCache(validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey());
+        APIKeyValidationInfoDTO infoDTO = CustomAPIKeyMgtUtil.getFromCustomKeyManagerCache(validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey());
 
         if (infoDTO != null) {
           if (log.isDebugEnabled())
@@ -292,7 +292,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
           if (log.isDebugEnabled())
             log.debug("Putting subscription DTO in cache for cache key: " + validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey());
 
-          CustomAPIKeyMgtUtil.writeToKeyManagerCache((validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey()), dto);
+          CustomAPIKeyMgtUtil.writeToCustomKeyManagerCache((validationContext.getContext() + "/" + actualVersion + dto.getConsumerKey()), dto);
 
         }
 

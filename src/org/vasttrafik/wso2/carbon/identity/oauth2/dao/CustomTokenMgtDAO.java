@@ -5,14 +5,21 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.vasttrafik.wso2.carbon.apimgt.keymgt.util.CustomAPIKeyMgtUtil;
+import org.wso2.carbon.caching.impl.CacheEntry;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -27,11 +34,45 @@ import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 public class CustomTokenMgtDAO extends TokenMgtDAO {
 
-  private final Log log = LogFactory.getLog(CustomTokenMgtDAO.class);
+  private static final Log log = LogFactory.getLog(CustomTokenMgtDAO.class);
 
   private static final String IDN_OAUTH2_ACCESS_TOKEN = "IDN_OAUTH2_ACCESS_TOKEN";
   private static final String UTC = "UTC";
   private static TokenPersistenceProcessor persistenceProcessor;
+  
+  /* Create runnable that periodically checks the access token cache for values to write */
+  final static Runnable checkCustomAccessTokenCache = new Runnable() {
+    public void run() {
+      Collection<CacheEntry<String, CacheEntry<String, AccessTokenDO>>> collection = CustomAPIKeyMgtUtil.getAllFromCustomAccessTokenCacheCache();
+      
+      HashSet<String> set = new HashSet<String>();
+      ArrayList<AccessTokenDO> list = new ArrayList<AccessTokenDO>();
+      if(collection.size() > 0) {
+        
+        log.debug("Collecting " + collection.size() + " access tokens to write to database");
+        
+        for(CacheEntry<String, CacheEntry<String, AccessTokenDO>> cacheEntry : collection) {
+          set.add(cacheEntry.getKey());
+          list.add(cacheEntry.getValue().getValue());
+        }
+        
+        try {
+          storeAccessTokens(list); // Send DOs to be written to database
+          CustomAPIKeyMgtUtil.removeAllFromCustomAccessTokenCache(set); // Remove written DOs from cache
+        } catch (Exception e) {
+          log.error("Problem storing access tokens to database");
+        }
+        
+      }
+    }
+  };
+  
+  static {
+    
+    // Run every 10 seconds
+    Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(checkCustomAccessTokenCache, 10, 10, TimeUnit.SECONDS);
+    
+  }
   
   private boolean enablePersist = true;
 
@@ -170,7 +211,7 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
     }
   }
   
-  public void storeAccessTokens(List<AccessTokenDO> accessTokenDOList)
+  public static void storeAccessTokens(List<AccessTokenDO> accessTokenDOList)
       throws IdentityOAuth2Exception
     {
     
