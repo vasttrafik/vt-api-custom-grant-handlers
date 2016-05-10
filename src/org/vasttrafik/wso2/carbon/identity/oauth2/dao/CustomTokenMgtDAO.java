@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
@@ -34,22 +35,17 @@ import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 public class CustomTokenMgtDAO extends TokenMgtDAO {
 
-  private final Log log = LogFactory.getLog(CustomTokenMgtDAO.class);
+  private static final Log log = LogFactory.getLog(CustomTokenMgtDAO.class);
 
-  private static final String INSERT_OAUTH2_ACCESS_TOKEN =
-    "INSERT INTO IDN_OAUTH2_ACCESS_TOKEN (ACCESS_TOKEN, REFRESH_TOKEN, CONSUMER_KEY_ID, AUTHZ_USER, TENANT_ID, USER_DOMAIN, " +
-	  "TIME_CREATED, REFRESH_TOKEN_TIME_CREATED, VALIDITY_PERIOD, REFRESH_TOKEN_VALIDITY_PERIOD, TOKEN_SCOPE_HASH, TOKEN_STATE, " +
-	  "USER_TYPE, TOKEN_ID, GRANT_TYPE, SUBJECT_IDENTIFIER) " +
-	"SELECT ?,?,ID,?,?,?,?,?,?,?,?,?,?,?,?,? FROM IDN_OAUTH_CONSUMER_APPS WHERE CONSUMER_KEY=?";
+  private static final String INSERT_OAUTH2_ACCESS_TOKEN = "INSERT INTO IDN_OAUTH2_ACCESS_TOKEN (ACCESS_TOKEN, REFRESH_TOKEN, CONSUMER_KEY_ID, AUTHZ_USER, TENANT_ID, USER_DOMAIN, "
+      + "TIME_CREATED, REFRESH_TOKEN_TIME_CREATED, VALIDITY_PERIOD, REFRESH_TOKEN_VALIDITY_PERIOD, TOKEN_SCOPE_HASH, TOKEN_STATE, " + "USER_TYPE, TOKEN_ID, GRANT_TYPE, SUBJECT_IDENTIFIER) "
+      + "SELECT ?,?,ID,?,?,?,?,?,?,?,?,?,?,?,?,? FROM IDN_OAUTH_CONSUMER_APPS WHERE CONSUMER_KEY=?";
 
-  private static final String INSERT_OAUTH2_TOKEN_SCOPES =
-    "INSERT INTO IDN_OAUTH2_ACCESS_TOKEN_SCOPE (TOKEN_ID, TOKEN_SCOPE, TENANT_ID) VALUES (?,?,?)";
+  private static final String INSERT_OAUTH2_TOKEN_SCOPES = "INSERT INTO IDN_OAUTH2_ACCESS_TOKEN_SCOPE (TOKEN_ID, TOKEN_SCOPE, TENANT_ID) VALUES (?,?,?)";
 
-  private static final String RETRIEVE_LATEST_TOKEN =
-    "SELECT TOP 1 ACCESS_TOKEN, REFRESH_TOKEN, TIME_CREATED, REFRESH_TOKEN_TIME_CREATED, VALIDITY_PERIOD, " +
-	  "REFRESH_TOKEN_VALIDITY_PERIOD, TOKEN_STATE, USER_TYPE, TOKEN_ID, SUBJECT_IDENTIFIER " +
-	"FROM IDN_OAUTH2_ACCESS_TOKEN WITH (INDEX(IDN_OAUTH2_ACCESS_TOKEN_IDX1), NOLOCK) " +
-	"WHERE CONSUMER_KEY_ID = (SELECT ID FROM IDN_OAUTH_CONSUMER_APPS WHERE CONSUMER_KEY = ?) AND AUTHZ_USER=? AND TOKEN_SCOPE_HASH=? ORDER BY TIME_CREATED DESC";
+  private static final String RETRIEVE_LATEST_TOKEN = "SELECT TOP 1 ACCESS_TOKEN, REFRESH_TOKEN, TIME_CREATED, REFRESH_TOKEN_TIME_CREATED, VALIDITY_PERIOD, "
+      + "REFRESH_TOKEN_VALIDITY_PERIOD, TOKEN_STATE, USER_TYPE, TOKEN_ID, SUBJECT_IDENTIFIER " + "FROM IDN_OAUTH2_ACCESS_TOKEN WITH (INDEX(IDN_OAUTH2_ACCESS_TOKEN_IDX1), NOLOCK) "
+      + "WHERE CONSUMER_KEY_ID = (SELECT ID FROM IDN_OAUTH_CONSUMER_APPS WHERE CONSUMER_KEY = ?) AND AUTHZ_USER=? AND TOKEN_SCOPE_HASH=? ORDER BY TIME_CREATED DESC";
 
   private static final String UTC = "UTC";
   private static TokenPersistenceProcessor persistenceProcessor;
@@ -61,18 +57,19 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
 
       HashSet<String> set = new HashSet<String>();
       ArrayList<AccessTokenDO> list = new ArrayList<AccessTokenDO>();
-      if(collection.size() > 0) {
+      if (collection.size() > 0) {
 
         log.debug("Collecting " + collection.size() + " access tokens to write to database");
 
-        for(CacheEntry<String, CacheEntry<String, AccessTokenDO>> cacheEntry : collection) {
+        for (CacheEntry<String, CacheEntry<String, AccessTokenDO>> cacheEntry : collection) {
           set.add(cacheEntry.getKey());
           list.add(cacheEntry.getValue().getValue());
         }
 
         try {
-          storeAccessTokens(list); // Send DOs to be written to database
-          CustomAPIKeyMgtUtil.removeAllFromCustomAccessTokenCache(set); // Remove written DOs from cache
+          if (storeAccessTokens(list) > 0) // Send DOs to be written to database
+            CustomAPIKeyMgtUtil.removeAllFromCustomAccessTokenCache(set); // Remove written DOs from
+                                                                          // cache
         } catch (Exception e) {
           log.error("Problem storing access tokens to database");
         }
@@ -107,15 +104,7 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
     }
   }
 
-  public AccessTokenDO retrieveLatestAccessToken(
-    String consumerKey,
-	AuthenticatedUser authzUser,
-	String userStoreDomain,
-	String scope,
-	boolean includeExpiredTokens
-  )
-    throws IdentityOAuth2Exception
-  {
+  public AccessTokenDO retrieveLatestAccessToken(String consumerKey, AuthenticatedUser authzUser, String userStoreDomain, String scope, boolean includeExpiredTokens) throws IdentityOAuth2Exception {
     StopWatch stopWatch = new StopWatch();
 
     Connection connection = IdentityDatabaseUtil.getDBConnection();
@@ -125,7 +114,7 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
     String tenantAwareUsernameWithNoUserDomain = authzUser.getUserName();
     String userDomain = authzUser.getUserStoreDomain();
 
-	if ((userDomain != null)) {
+    if ((userDomain != null)) {
       userDomain.toUpperCase();
     }
 
@@ -137,7 +126,8 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
       String sql = RETRIEVE_LATEST_TOKEN;
 
       if (StringUtils.isNotEmpty(userStoreDomain)) {
-        // logic to store access token into different tables when multiple user stores are configured.
+        // logic to store access token into different tables when multiple user stores are
+        // configured.
         sql = sql.replace("IDN_OAUTH2_ACCESS_TOKEN", "IDN_OAUTH2_ACCESS_TOKEN_" + userStoreDomain);
       }
 
@@ -164,18 +154,18 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
         prepStmt.setString(3, hashedScope);
       }
 
-      if(log.isDebugEnabled()) {
+      if (log.isDebugEnabled()) {
         log.debug(sql);
       }
 
-      if(log.isInfoEnabled()) {
+      if (log.isInfoEnabled()) {
         stopWatch.start();
       }
 
       resultSet = prepStmt.executeQuery();
       connection.commit();
 
-      if(log.isInfoEnabled()) {
+      if (log.isInfoEnabled()) {
         stopWatch.stop();
         log.info("Execute query took: " + stopWatch.getTime() + " ms.");
       }
@@ -218,16 +208,8 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
           user.setUserStoreDomain(userDomain);
           user.setAuthenticatedSubjectIdentifier(subjectIdentifier);
 
-          AccessTokenDO accessTokenDO = new AccessTokenDO(
-		    consumerKey,
-			user,
-			OAuth2Util.buildScopeArray(scope),
-			new Timestamp(issuedTime),
-			new Timestamp(refreshTokenIssuedTime),
-            validityPeriodInMillis,
-			refreshTokenValidityPeriodInMillis,
-			userType
-		  );
+          AccessTokenDO accessTokenDO = new AccessTokenDO(consumerKey, user, OAuth2Util.buildScopeArray(scope), new Timestamp(issuedTime), new Timestamp(refreshTokenIssuedTime),
+              validityPeriodInMillis, refreshTokenValidityPeriodInMillis, userType);
           accessTokenDO.setAccessToken(accessToken);
           accessTokenDO.setRefreshToken(refreshToken);
           accessTokenDO.setTokenState(tokenState);
@@ -236,50 +218,51 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
         }
       }
       return null;
-    }
-	catch (SQLException e) {
-      String errorMsg = "Error occurred while trying to retrieve latest 'ACTIVE' " + "access token for Client ID : " +
-	    consumerKey + ", User ID : " + authzUser + " and  Scope : " + scope;
+    } catch (SQLException e) {
+      String errorMsg = "Error occurred while trying to retrieve latest 'ACTIVE' " + "access token for Client ID : " + consumerKey + ", User ID : " + authzUser + " and  Scope : " + scope;
 
-	  if (includeExpiredTokens) {
+      if (includeExpiredTokens) {
         errorMsg = errorMsg.replace("ACTIVE", "ACTIVE or EXPIRED");
       }
       throw new IdentityOAuth2Exception(errorMsg, e);
-    }
-	finally {
+    } finally {
       IdentityDatabaseUtil.closeAllConnections(connection, resultSet, prepStmt);
     }
   }
 
-  public int storeAccessTokens(List<AccessTokenDO> accessTokenDOList)
-    throws IdentityOAuth2Exception
-  {
+  public static int storeAccessTokens(List<AccessTokenDO> accessTokenDOList) throws IdentityOAuth2Exception {
     if (accessTokenDOList == null || accessTokenDOList.isEmpty())
       return 0;
 
-	Connection connection = null;
+    StopWatch stopWatch = new StopWatch();
 
-	PreparedStatement tokenStmt = null;
-	PreparedStatement scopeStmt = null;
+    if (log.isInfoEnabled()) {
+      stopWatch.start();
+    }
 
-	AccessTokenDO tokenDO = null;
-	AuthenticatedUser user = null;
+    Connection connection = null;
+
+    PreparedStatement tokenStmt = null;
+    PreparedStatement scopeStmt = null;
+
+    AccessTokenDO tokenDO = null;
+    AuthenticatedUser user = null;
 
     try {
-	  connection = IdentityDatabaseUtil.getDBConnection();
+      connection = IdentityDatabaseUtil.getDBConnection();
 
       tokenStmt = connection.prepareStatement(INSERT_OAUTH2_ACCESS_TOKEN);
       scopeStmt = connection.prepareStatement(INSERT_OAUTH2_TOKEN_SCOPES);
 
       for (Iterator<AccessTokenDO> it = accessTokenDOList.iterator(); it.hasNext();) {
         tokenDO = it.next();
-		// Get the authenticated user
-		user = tokenDO.getAuthzUser();
-		// Get the tenant id and token id
-		int tenantId = OAuth2Util.getTenantId(user.getTenantDomain());
-		String accessTokenId = tokenDO.getTokenId();
+        // Get the authenticated user
+        user = tokenDO.getAuthzUser();
+        // Get the tenant id and token id
+        int tenantId = OAuth2Util.getTenantId(user.getTenantDomain());
+        String accessTokenId = tokenDO.getTokenId();
 
-		// Bind all the parameters
+        // Bind all the parameters
         tokenStmt.setString(1, persistenceProcessor.getProcessedAccessTokenIdentifier(tokenDO.getAccessToken()));
 
         if (tokenDO.getRefreshToken() != null) {
@@ -303,7 +286,7 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
         tokenStmt.setString(15, user.getAuthenticatedSubjectIdentifier());
         tokenStmt.setString(16, persistenceProcessor.getProcessedClientId(tokenDO.getConsumerKey()));
 
-		// Add statement to batch
+        // Add statement to batch
         tokenStmt.addBatch();
 
         // Add the scopes
@@ -312,32 +295,35 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
             scopeStmt.setString(1, accessTokenId);
             scopeStmt.setString(2, scope);
             scopeStmt.setInt(3, tenantId);
-			// Add statement to batch
+            // Add statement to batch
             scopeStmt.addBatch();
-           }
+          }
         }
-
-		// Execute the batches
-		tokenStmt.executeBatch();
-		scopeStmt.executeBatch();
-
-		connection.commit();
       }
-	}
-	catch (Exception ex) {
-	  try {
-		connection.rollback();
+
+      // Execute the batches
+      tokenStmt.executeBatch();
+      scopeStmt.executeBatch();
+
+      connection.commit();
+
+      if (log.isInfoEnabled()) {
+        stopWatch.stop();
+        log.info("Execute batch took: " + stopWatch.getTime() + " ms.");
       }
-	  catch (Exception e) {
-	    log.error("Error trying to rollback transaction", e);
-	  }
-	  throw new IdentityOAuth2Exception("Error while storing access tokens", ex);
-	}
-	finally {
-	  IdentityDatabaseUtil.closeStatement(tokenStmt);
-	  IdentityDatabaseUtil.closeStatement(scopeStmt);
-	  IdentityDatabaseUtil.closeConnection(connection);
-	}
-	return accessTokenDOList.size();
+
+    } catch (Exception ex) {
+      try {
+        connection.rollback();
+      } catch (Exception e) {
+        log.error("Error trying to rollback transaction", e);
+      }
+      throw new IdentityOAuth2Exception("Error while storing access tokens", ex);
+    } finally {
+      IdentityDatabaseUtil.closeStatement(tokenStmt);
+      IdentityDatabaseUtil.closeStatement(scopeStmt);
+      IdentityDatabaseUtil.closeConnection(connection);
+    }
+    return accessTokenDOList.size();
   }
 }
