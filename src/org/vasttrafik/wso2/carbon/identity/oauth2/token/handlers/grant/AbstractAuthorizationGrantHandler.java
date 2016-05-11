@@ -16,13 +16,13 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.as.issuer.OAuthIssuer;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.vasttrafik.wso2.carbon.apimgt.keymgt.util.CustomAPIKeyMgtUtil;
+import org.vasttrafik.wso2.carbon.caching.impl.CustomOAuthCache;
 import org.vasttrafik.wso2.carbon.identity.oauth2.dao.CustomTokenMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.cache.AppInfoCache;
 import org.wso2.carbon.identity.oauth.cache.CacheEntry;
-import org.wso2.carbon.identity.oauth.cache.OAuthCache;
 import org.wso2.carbon.identity.oauth.cache.OAuthCacheKey;
 import org.wso2.carbon.identity.oauth.callback.OAuthCallback;
 import org.wso2.carbon.identity.oauth.callback.OAuthCallbackManager;
@@ -46,7 +46,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
   protected CustomTokenMgtDAO customTokenMgtDAO;
   protected OAuthCallbackManager callbackManager;
   protected boolean cacheEnabled;
-  protected OAuthCache oauthCache;
+  protected CustomOAuthCache oauthCache;
 
   public void init() throws IdentityOAuth2Exception {
     this.tokenMgtDAO = new TokenMgtDAO();
@@ -54,7 +54,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     this.callbackManager = new OAuthCallbackManager();
     if (OAuthServerConfiguration.getInstance().isCacheEnabled()) {
       this.cacheEnabled = true;
-      this.oauthCache = OAuthCache.getInstance();
+      this.oauthCache = CustomOAuthCache.getInstance();
       
       log.info("oAuth cache initiated with capacity: " + this.oauthCache.getCapacity() + " and timeout: " + this.oauthCache.getCacheTimeout());
       
