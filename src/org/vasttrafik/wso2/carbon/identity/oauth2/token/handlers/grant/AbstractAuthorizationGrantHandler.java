@@ -344,6 +344,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     
       newAccessTokenDO.setAccessToken(newAccessToken);   
       CustomAPIKeyMgtUtil.writeToCustomAccessTokenCache(newAccessToken, newAccessTokenDO);
+      log.debug("Added value to Access Token Cache");
   }
   
   protected void persistAccessToken(OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO, String userStoreDomain, AccessTokenDO newAccessTokenDO, String newAccessToken, AccessTokenDO existingAccessTokenDO)

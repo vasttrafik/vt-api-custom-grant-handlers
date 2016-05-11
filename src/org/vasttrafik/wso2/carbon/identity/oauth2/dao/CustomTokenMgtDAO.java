@@ -5,22 +5,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.vasttrafik.wso2.carbon.apimgt.keymgt.util.CustomAPIKeyMgtUtil;
-import org.wso2.carbon.caching.impl.CacheEntry;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -45,45 +38,10 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
 
   private static final String RETRIEVE_LATEST_TOKEN = "SELECT TOP 1 ACCESS_TOKEN, REFRESH_TOKEN, TIME_CREATED, REFRESH_TOKEN_TIME_CREATED, VALIDITY_PERIOD, "
       + "REFRESH_TOKEN_VALIDITY_PERIOD, TOKEN_STATE, USER_TYPE, TOKEN_ID, SUBJECT_IDENTIFIER " + "FROM IDN_OAUTH2_ACCESS_TOKEN WITH (INDEX(IDN_OAUTH2_ACCESS_TOKEN_IDX1), NOLOCK) "
-      + "WHERE CONSUMER_KEY_ID = (SELECT ID FROM IDN_OAUTH_CONSUMER_APPS WHERE CONSUMER_KEY = ?) AND AUTHZ_USER=? AND TOKEN_SCOPE_HASH=? ORDER BY TIME_CREATED DESC";
+      + "WHERE CONSUMER_KEY_ID = (SELECT ID FROM IDN_OAUTH_CONSUMER_APPS WHERE CONSUMER_KEY= ?) AND AUTHZ_USER= ? AND TOKEN_SCOPE_HASH= ? ORDER BY TIME_CREATED DESC";
 
   private static final String UTC = "UTC";
   private static TokenPersistenceProcessor persistenceProcessor;
-
-  /* Create runnable that periodically checks the access token cache for values to write */
-  final static Runnable checkCustomAccessTokenCache = new Runnable() {
-    public void run() {
-      Collection<CacheEntry<String, CacheEntry<String, AccessTokenDO>>> collection = CustomAPIKeyMgtUtil.getAllFromCustomAccessTokenCacheCache();
-
-      HashSet<String> set = new HashSet<String>();
-      ArrayList<AccessTokenDO> list = new ArrayList<AccessTokenDO>();
-      if (collection.size() > 0) {
-
-        log.debug("Collecting " + collection.size() + " access tokens to write to database");
-
-        for (CacheEntry<String, CacheEntry<String, AccessTokenDO>> cacheEntry : collection) {
-          set.add(cacheEntry.getKey());
-          list.add(cacheEntry.getValue().getValue());
-        }
-
-        try {
-          if (storeAccessTokens(list) > 0) // Send DOs to be written to database
-            CustomAPIKeyMgtUtil.removeAllFromCustomAccessTokenCache(set); // Remove written DOs from
-                                                                          // cache
-        } catch (Exception e) {
-          log.error("Problem storing access tokens to database");
-        }
-
-      }
-    }
-  };
-
-  static {
-
-    // Run every 10 seconds
-    Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(checkCustomAccessTokenCache, 10, 10, TimeUnit.SECONDS);
-
-  }
 
   private boolean enablePersist = true;
 
@@ -132,7 +90,7 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
       }
 
       if (!isUsernameCaseSensitive) {
-        sql = sql.replace("AUTHZ_USER", "LOWER(AUTHZ_USER");
+        sql = sql.replace("AUTHZ_USER", "LOWER(AUTHZ_USER)");
       }
 
       String hashedScope = OAuth2Util.hashScopes(scope);
@@ -230,7 +188,7 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
     }
   }
 
-  public static int storeAccessTokens(List<AccessTokenDO> accessTokenDOList) throws IdentityOAuth2Exception {
+  public int storeAccessTokens(List<AccessTokenDO> accessTokenDOList) throws IdentityOAuth2Exception {
     if (accessTokenDOList == null || accessTokenDOList.isEmpty())
       return 0;
 
