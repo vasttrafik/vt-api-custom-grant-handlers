@@ -2,6 +2,7 @@ package org.vasttrafik.wso2.carbon.caching.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.vasttrafik.wso2.carbon.caching.impl.eviction.NoneEvictionAlgorithm;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 
 public class CustomAccessTokenCache
@@ -16,7 +17,7 @@ public class CustomAccessTokenCache
   
   private CustomAccessTokenCache()
   {
-    super(CUSTOM_ACCESS_TOKEN_CACHE_NAME, CUSTOM_ACCESS_TOKEN_CACHE_TIMEOUT, CUSTOM_ACCESS_TOKEN_CACHE_CAPACITY);
+    super(CUSTOM_ACCESS_TOKEN_CACHE_NAME, CUSTOM_ACCESS_TOKEN_CACHE_TIMEOUT, CUSTOM_ACCESS_TOKEN_CACHE_CAPACITY, new NoneEvictionAlgorithm());
   }
   
   public static CustomAccessTokenCache getInstance()
@@ -31,7 +32,7 @@ public class CustomAccessTokenCache
       }
     }
     
-    log.info("Custom access token cache initiated with capacity: " + instance.getCapacity() + " and timeout: " + instance.getCacheTimeout());
+    //log.info("Custom access token cache initiated with capacity: " + instance.getCapacity() + " and timeout: " + instance.getCacheTimeout());
     
     return instance;
   }
