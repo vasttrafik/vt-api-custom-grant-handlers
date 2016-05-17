@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.vasttrafik.wso2.carbon.apimgt.keymgt.util.CustomAPIKeyMgtUtil;
@@ -36,11 +35,11 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
 
   public boolean validateToken(TokenValidationContext validationContext) throws APIKeyMgtException {
     
-    StopWatch stopWatch = new StopWatch();
+//    StopWatch stopWatch = new StopWatch();
     
-    if(log.isInfoEnabled()) {
-      stopWatch.start();
-    }
+//    if(log.isInfoEnabled()) {
+//      stopWatch.start();
+//    }
 
     if (log.isDebugEnabled())
       log.debug(validationContext.getContext() + " " + validationContext.getVersion() + " " + validationContext.getAccessToken());
@@ -80,10 +79,10 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
 
           validationContext.setValidationInfoDTO(infoDTO);
           
-          if(log.isInfoEnabled()) {
-            stopWatch.stop();
-            log.info("validateToken 2 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());          
-          }
+//          if(log.isInfoEnabled()) {
+//            stopWatch.stop();
+//            log.info("validateToken 2 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());          
+//          }
           
           return true;
         }
@@ -131,20 +130,20 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       throw new APIKeyMgtException("Error while obtaining Token Metadata from Authorization Server");
     }
     
-    if(log.isInfoEnabled()) {
-      stopWatch.stop();
-      log.info("validateToken 3 took: " + stopWatch.getTime() + " ms.");      
-    }
+//    if(log.isInfoEnabled()) {
+//      stopWatch.stop();
+//      log.info("validateToken 3 took: " + stopWatch.getTime() + " ms.");      
+//    }
     
     return tokenInfo.isTokenValid();
   }
 
   public boolean validateScopes(TokenValidationContext validationContext) throws APIKeyMgtException {
     
-    StopWatch stopWatch = new StopWatch();
+//    StopWatch stopWatch = new StopWatch();
     
-    if(log.isInfoEnabled()) 
-      stopWatch.start();
+//    if(log.isInfoEnabled()) 
+//      stopWatch.start();
     
     if (validationContext.isCacheHit()) {
       return true;
@@ -185,10 +184,10 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       if (scopeValidator != null) {
         if (scopeValidator.validateScope(accessTokenDO, resource)) {
           
-          if(log.isInfoEnabled()) {
-            stopWatch.stop();
-            log.info("validateScopes 1 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());
-          }
+//          if(log.isInfoEnabled()) {
+//            stopWatch.stop();
+//            log.info("validateScopes 1 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());
+//          }
           
           return true;
         }
@@ -201,21 +200,21 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       apiKeyValidationInfoDTO.setValidationStatus(900910);
     }
     
-    if(log.isInfoEnabled()) {
-      stopWatch.stop();
-      log.info("validateScopes 2 took: " + stopWatch.getTime() + " ms.");      
-    }
+//    if(log.isInfoEnabled()) {
+//      stopWatch.stop();
+//      log.info("validateScopes 2 took: " + stopWatch.getTime() + " ms.");      
+//    }
     
     return false;
   }
 
   public boolean validateSubscription(TokenValidationContext validationContext) throws APIKeyMgtException {
     
-    StopWatch stopWatch = new StopWatch();
+//    StopWatch stopWatch = new StopWatch();
     
-    if(log.isInfoEnabled()) {
-      stopWatch.start();     
-    }
+//    if(log.isInfoEnabled()) {
+//      stopWatch.start();     
+//    }
     
     if ((validationContext == null) || (validationContext.getValidationInfoDTO() == null)) {
       return false;
@@ -270,10 +269,10 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
           dto.setApplicationTier(infoDTO.getApplicationTier());
           dto.setType(infoDTO.getType());
           
-          if(log.isInfoEnabled()) {
-            stopWatch.stop();
-            log.info("validateSubscription 1 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());          
-          }
+//          if(log.isInfoEnabled()) {
+//            stopWatch.stop();
+//            log.info("validateSubscription 1 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());          
+//          }
 
           return true;
         }
@@ -303,12 +302,11 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
     } catch (APIManagementException e) {
       log.error("Error Occurred while validating subscription.", e);
     }
-    
-    
-    if(log.isInfoEnabled()) {
-      stopWatch.stop();
-      log.info("validateSubscription 2 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());      
-    }
+        
+//    if(log.isInfoEnabled()) {
+//      stopWatch.stop();
+//      log.info("validateSubscription 2 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());      
+//    }
     
     return state;
   }
@@ -340,11 +338,11 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       throws APIKeyMgtException
     {
     
-    StopWatch stopWatch = new StopWatch();
+//    StopWatch stopWatch = new StopWatch();
     
-    if(log.isInfoEnabled()) {
-      stopWatch.start();     
-    }
+//    if(log.isInfoEnabled()) {
+//      stopWatch.start();     
+//    }
     
       TokenGenerator generator = APIKeyMgtDataHolder.getTokenGenerator();
       try
@@ -353,10 +351,10 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
         
         validationContext.getValidationInfoDTO().setEndUserToken(jwt);
         
-        if(log.isInfoEnabled()) {
-          stopWatch.stop();
-          log.info("generate consumer token took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());      
-        }
+//        if(log.isInfoEnabled()) {
+//          stopWatch.stop();
+//          log.info("generate consumer token took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());      
+//        }
         
         return true;
       }

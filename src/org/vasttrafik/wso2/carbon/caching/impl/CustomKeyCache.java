@@ -10,6 +10,7 @@ import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
 public class CustomKeyCache
   extends CustomBaseCache<String, APIKeyValidationInfoDTO>
 {
+  @SuppressWarnings("unused")
   private static Log log = LogFactory.getLog(CustomKeyCache.class);
   
   private static final String CUSTOM_KEY_CACHE_NAME = "CustomKeyCache";

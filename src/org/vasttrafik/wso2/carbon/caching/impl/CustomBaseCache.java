@@ -19,7 +19,6 @@ import javax.cache.Caching;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -35,19 +34,23 @@ public class CustomBaseCache<K extends Serializable, V extends Serializable> {
   
 	private CacheBuilder<K, V> cacheBuilder;
 	private String cacheName;
+	private String origCacheName;
 	private int capacity = -1;
 	private int timeout = -1;
 	private EvictionAlgorithm evictionAlgorithm;
-	private List<AbstractCacheListener> cacheListeners = new ArrayList<AbstractCacheListener>();
+	@SuppressWarnings("rawtypes")
+  private List<AbstractCacheListener> cacheListeners = new ArrayList<AbstractCacheListener>();
 
 	public CustomBaseCache(String cacheName, int timeout, int capacity, EvictionAlgorithm evictionAlgorithm) {
 		this.cacheName = cacheName;
+		this.origCacheName = cacheName;
 		this.timeout = timeout;
 		this.capacity = capacity;
 		this.evictionAlgorithm = evictionAlgorithm;
 	}
 
-	public Cache<K, V> getBaseCache() {
+	@SuppressWarnings({"rawtypes", "unchecked"})
+  public Cache<K, V> getBaseCache() {
 
 		Cache<K, V> cache = null;
 
@@ -56,7 +59,7 @@ public class CustomBaseCache<K extends Serializable, V extends Serializable> {
 		
 
 		if (getCacheTimeout() > 0 && cacheBuilder == null) {
-			synchronized (cacheName.intern()) {
+			synchronized (origCacheName) {
 				if (cacheBuilder == null) {
 					// Get the cache cache configuration
 					getCacheConfiguration();
@@ -156,7 +159,8 @@ public class CustomBaseCache<K extends Serializable, V extends Serializable> {
 		logIfSlow("clear",l);
 	}
 
-	public void addListener(AbstractCacheListener listener) {
+	@SuppressWarnings("rawtypes")
+  public void addListener(AbstractCacheListener listener) {
 		cacheListeners.add(listener);
 	}
 
@@ -168,13 +172,15 @@ public class CustomBaseCache<K extends Serializable, V extends Serializable> {
 		return this.capacity;
 	}
 
-	private void setCapacity(CacheImpl cache) {
+	@SuppressWarnings("rawtypes")
+  private void setCapacity(CacheImpl cache) {
 		if (getCapacity() > 0) {
 			cache.setCapacity(getCapacity());
 		}
 	}
   
-	private void setEvictionAlgorithm(CacheImpl cache) {
+	@SuppressWarnings("rawtypes")
+  private void setEvictionAlgorithm(CacheImpl cache) {
 		if (evictionAlgorithm != null) {
 			cache.setEvictionAlgorithm(evictionAlgorithm);
 	    

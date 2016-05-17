@@ -12,16 +12,19 @@ import org.apache.commons.logging.LogFactory;
 public class NoneEvictionAlgorithm implements EvictionAlgorithm
 {
   private static final Log log = LogFactory.getLog(NoneEvictionAlgorithm.class);
+  @SuppressWarnings("rawtypes")
   private CacheImpl cache;
   
   public NoneEvictionAlgorithm() {
   }
   
+  @SuppressWarnings("rawtypes")
   public void setCache(CacheImpl cache) {
 	  this.cache = cache;
   }
   
   // TO-DO: Check if number of entries exceed capacity, if so, try to find something to evict instead of going to sleep...
+  @SuppressWarnings({"rawtypes", "static-access"})
   public CacheEntry getEntryForEviction(TreeSet<CacheEntry> evictionList)
   {
 	if (cache != null) {
@@ -30,6 +33,7 @@ public class NoneEvictionAlgorithm implements EvictionAlgorithm
 	}
     
     try {
+
     	Thread.currentThread().sleep(60000L);
     }
     catch (InterruptedException i) {

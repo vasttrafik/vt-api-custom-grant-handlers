@@ -43,6 +43,7 @@ public class CustomTokenMgtDAO extends TokenMgtDAO {
   private static final String UTC = "UTC";
   private static TokenPersistenceProcessor persistenceProcessor;
 
+  @SuppressWarnings("unused")
   private boolean enablePersist = true;
 
   Connection connection = IdentityDatabaseUtil.getDBConnection();

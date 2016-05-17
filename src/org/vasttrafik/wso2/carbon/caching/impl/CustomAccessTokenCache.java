@@ -8,6 +8,7 @@ import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 public class CustomAccessTokenCache
   extends CustomBaseCache<String, AccessTokenDO>
 {
+  @SuppressWarnings("unused")
   private static Log log = LogFactory.getLog(CustomAccessTokenCache.class);
   
   private static final String CUSTOM_ACCESS_TOKEN_CACHE_NAME = "CustomAccessTokenCache";

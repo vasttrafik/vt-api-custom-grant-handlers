@@ -11,9 +11,9 @@ import org.wso2.carbon.identity.oauth.cache.OAuthCacheKey;
 public class CustomOAuthCache
   extends CustomBaseCache<OAuthCacheKey, CacheEntry>
 {
+  @SuppressWarnings("unused")
   private static Log log = LogFactory.getLog(CustomOAuthCache.class);
   
-  //private static final String CUSTOM_OAUTH_CACHE_NAME = "$__local__$.CustomOAuthCache";
   private static final String CUSTOM_OAUTH_CACHE_NAME = "CustomOAuthCache";
   private static final int CUSTOM_OAUTH_CACHE_TIMEOUT = 900;
   private static final int CUSTOM_OAUTH_CACHE_CAPACITY = 1000000;
