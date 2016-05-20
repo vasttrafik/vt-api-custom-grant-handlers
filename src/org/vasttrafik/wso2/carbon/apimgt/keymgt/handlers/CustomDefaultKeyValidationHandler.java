@@ -9,9 +9,9 @@ import org.apache.commons.logging.LogFactory;
 import org.vasttrafik.wso2.carbon.apimgt.keymgt.util.CustomAPIKeyMgtUtil;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
+import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
-import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.apimgt.impl.token.TokenGenerator;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.APIKeyMgtException;
@@ -21,6 +21,7 @@ import org.wso2.carbon.apimgt.keymgt.util.APIKeyMgtDataHolder;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.dao.TokenMgtDAO;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeValidator;
 
@@ -58,7 +59,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       }
       return true;
     }
-    AccessTokenInfo tokenInfo = null;
+    AccessTokenInfo tokenInfo = new AccessTokenInfo();
     try {
 
       String actualVersion = validationContext.getVersion();
@@ -91,10 +92,32 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       if (log.isDebugEnabled())
         log.debug("No match found in key cache cache for " + validationContext.getAccessToken() + " token, returning to normal handling");
 
-      tokenInfo = KeyManagerHolder.getKeyManagerInstance().getTokenMetaData(validationContext.getAccessToken());
-      if (tokenInfo == null) {
-        return false;
-      }
+      //tokenInfo = KeyManagerHolder.getKeyManagerInstance().getTokenMetaData(validationContext.getAccessToken());
+      
+      try {
+    	  TokenMgtDAO tokenMgtDAO = new TokenMgtDAO();
+    	  AccessTokenDO accessTokenDO = tokenMgtDAO.retrieveAccessToken(validationContext.getAccessToken(), false);
+          
+          if(accessTokenDO != null) {
+            tokenInfo.setTokenValid(true);
+            tokenInfo.setEndUserName(accessTokenDO.getAuthzUser().getUserName());
+            tokenInfo.setConsumerKey(accessTokenDO.getConsumerKey());
+            tokenInfo.setValidityPeriod(accessTokenDO.getValidityPeriod() * 1000L);
+            tokenInfo.setIssuedTime(accessTokenDO.getIssuedTime().getTime());
+            tokenInfo.setScope(accessTokenDO.getScope());
+            tokenInfo.setApplicationToken(true); // Always assume application token
+            
+          } else {
+            tokenInfo.setTokenValid(false);
+            tokenInfo.setErrorcode(APIConstants.KeyValidationStatus.API_AUTH_INVALID_CREDENTIALS);
+            return false;
+          }
+          
+        } catch (IdentityOAuth2Exception e) {
+          log.error("Error while obtaining Token Metadata from Databsse", e);
+          throw new APIKeyMgtException("Error while obtaining Token Metadata from Database");
+        }
+      
       validationContext.setTokenInfo(tokenInfo);
 
       APIKeyValidationInfoDTO apiKeyValidationInfoDTO = new APIKeyValidationInfoDTO();
@@ -112,7 +135,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       apiKeyValidationInfoDTO.setEndUserName(tokenInfo.getEndUserName());
       apiKeyValidationInfoDTO.setConsumerKey(tokenInfo.getConsumerKey());
       apiKeyValidationInfoDTO.setIssuedTime(tokenInfo.getIssuedTime());
-      apiKeyValidationInfoDTO.setValidityPeriod(tokenInfo.getValidityPeriod());
+      apiKeyValidationInfoDTO.setValidityPeriod(tokenInfo.getValidityPeriod() * 1000L);
       if (tokenInfo.getScopes() != null) {
         Set<String> scopeSet = new HashSet<String>(Arrays.asList(tokenInfo.getScopes()));
         apiKeyValidationInfoDTO.setScopes(scopeSet);
@@ -125,7 +148,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
         CustomAPIKeyMgtUtil.writeToCustomKeyManagerCache(validationContext.getAccessToken(), apiKeyValidationInfoDTO);
       }
 
-    } catch (APIManagementException e) {
+    } catch (Exception e) {
       log.error("Error while obtaining Token Metadata from Authorization Server", e);
       throw new APIKeyMgtException("Error while obtaining Token Metadata from Authorization Server");
     }
