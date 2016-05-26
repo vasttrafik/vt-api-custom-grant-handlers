@@ -37,6 +37,7 @@ public class CustomBaseCache<K extends Serializable, V extends Serializable> {
 	private String origCacheName;
 	private int capacity = -1;
 	private int timeout = -1;
+	private boolean allowAdd = true;
 	private EvictionAlgorithm evictionAlgorithm;
 	@SuppressWarnings("rawtypes")
   private List<AbstractCacheListener> cacheListeners = new ArrayList<AbstractCacheListener>();
@@ -47,6 +48,10 @@ public class CustomBaseCache<K extends Serializable, V extends Serializable> {
 		this.timeout = timeout;
 		this.capacity = capacity;
 		this.evictionAlgorithm = evictionAlgorithm;
+	}
+	
+	public void setAllowAdd(boolean allowAdd) {
+		this.allowAdd = allowAdd;
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
@@ -101,14 +106,21 @@ public class CustomBaseCache<K extends Serializable, V extends Serializable> {
    * @param key Key which cache entry is indexed.
    * @param entry Actual object where cache entry is placed.
    */
-	public void addToCache(K key, V entry) {
-		long l = System.currentTimeMillis();
-		Cache<K, V> cache = getBaseCache();
-    
-		if (cache != null) {
-			cache.put(key, entry);
+	public void addToCache(K key, V entry) throws IllegalStateException {
+		
+		if(allowAdd) {
+			long l = System.currentTimeMillis();
+			Cache<K, V> cache = getBaseCache();
+	    
+			if (cache != null) {
+				cache.put(key, entry);
+			}
+			logIfSlow("addToCache",l);			
 		}
-		logIfSlow("addToCache",l);
+		else {
+			throw new IllegalStateException("The cache does not allow add to cache");
+		}
+
 	}
 
   /**

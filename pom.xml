@@ -8,7 +8,7 @@
 	<version>1.1.0</version>
 	<name>vt-api-custom-grant-handlers</name>
 	<description>vt-api-custom-grant-handlers</description>
-	<packaging>jar</packaging>
+	<packaging>bundle</packaging>
 
 	<dependencies>
 		<dependency>
@@ -67,6 +67,33 @@
 					<target>1.7</target>
 				</configuration>
 			</plugin>
+			<plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-scr-plugin</artifactId>
+           </plugin>
+           <plugin>
+               <groupId>org.apache.felix</groupId>
+               <artifactId>maven-bundle-plugin</artifactId>
+               <extensions>true</extensions>
+               <configuration>
+                   <instructions>
+                       <Bundle-Vendor>Vasttrafik</Bundle-Vendor>
+                       <Bundle-SymbolicName>${pom.artifactId}</Bundle-SymbolicName>
+                       <Bundle-Name>${pom.artifactId}</Bundle-Name>
+                       <Bundle-Version>1.0.0</Bundle-Version>
+                       <Import-Package>
+                           org.osgi.framework, org.wso2.carbon.core, org.wso2.carbon.utils.*
+                           *;resolution:=optional
+                       </Import-Package>
+                       <Export-Package>
+                       	org.vasttrafik.wso2.carbon.apimgt.keymgt.handlers.*,
+                        org.vasttrafik.wso2.carbon.caching.shutdown.*,
+                        org.vasttrafik.wso2.carbon.identity.oauth2.token.handlers.grant.*
+                       </Export-Package>
+                       <DynamicImport-Package>*</DynamicImport-Package>
+                   </instructions>
+               </configuration>
+           </plugin>
 		</plugins>
 	</build>
 </project>

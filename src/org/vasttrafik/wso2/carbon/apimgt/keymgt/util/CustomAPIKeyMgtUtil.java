@@ -12,6 +12,7 @@ import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +22,9 @@ public class CustomAPIKeyMgtUtil {
 
   private static CustomKeyCache customKeyCache = CustomKeyCache.getInstance();
   private static CustomAccessTokenCache customAccessTokenCache = CustomAccessTokenCache.getInstance();
+  
+  private static ScheduledFuture<?> tokenCacheCheckTaskFuture;
+  private static CustomAccessTokenCacheCheckTask customAccessTokenCacheCheckTask;
 
   static {
     ThreadFactory threadFactory = new ThreadFactory() {
@@ -30,9 +34,20 @@ public class CustomAPIKeyMgtUtil {
       }
     };
 
-    Executors.newSingleThreadScheduledExecutor(threadFactory).scheduleAtFixedRate(new CustomAccessTokenCacheCheckTask((CacheImpl<String, AccessTokenDO>) customAccessTokenCache.getBaseCache()), 10L, 10L, TimeUnit.SECONDS);
+    customAccessTokenCacheCheckTask = new CustomAccessTokenCacheCheckTask((CacheImpl<String, AccessTokenDO>) customAccessTokenCache.getBaseCache());
+    tokenCacheCheckTaskFuture = Executors.newSingleThreadScheduledExecutor(threadFactory).scheduleAtFixedRate(customAccessTokenCacheCheckTask, 10L, 10L, TimeUnit.SECONDS);
   }
-
+  
+  /*
+   * This will make sure all keys are written to database.
+   * Useful when shutting down server.
+   */
+  public static void runShutdownHook() {
+	  customAccessTokenCache.setAllowAdd(false);
+	  tokenCacheCheckTaskFuture.cancel(false);
+	  customAccessTokenCacheCheckTask.run();
+  }
+  
   /**
    * Get the KeyValidationInfo object from cache, for a given cache-Key
    *

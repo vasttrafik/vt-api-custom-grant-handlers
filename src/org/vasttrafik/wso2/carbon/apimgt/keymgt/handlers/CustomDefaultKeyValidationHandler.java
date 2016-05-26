@@ -29,6 +29,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
   private static final Log log = LogFactory.getLog(CustomDefaultKeyValidationHandler.class);
 
   private ApiMgtDAO dao = new ApiMgtDAO();
+  private TokenMgtDAO tokenMgtDAO = null;
 
   public CustomDefaultKeyValidationHandler() {
     log.info(getClass().getName() + " Initialised");
@@ -95,7 +96,11 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       //tokenInfo = KeyManagerHolder.getKeyManagerInstance().getTokenMetaData(validationContext.getAccessToken());
       
       try {
-    	  TokenMgtDAO tokenMgtDAO = new TokenMgtDAO();
+    	  
+    	  if(tokenMgtDAO == null) {
+    		  tokenMgtDAO = new TokenMgtDAO();
+    	  }
+
     	  AccessTokenDO accessTokenDO = tokenMgtDAO.retrieveAccessToken(validationContext.getAccessToken(), false);
           
           if(accessTokenDO != null) {
