@@ -136,9 +136,11 @@ public class CustomBaseCache<K extends Serializable, V extends Serializable> {
 	
 		long l = System.currentTimeMillis();
 		Cache<K, V> cache = getBaseCache();
+		
+		V value = cache.get(key);
     
-		if (cache != null && cache.get(key) != null) {
-			return (V) cache.get(key);
+		if (cache != null && value != null) {
+			return value;
 		}
 		logIfSlow("getValueFromCache",l);
 		return null;

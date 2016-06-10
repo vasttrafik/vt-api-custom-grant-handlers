@@ -1,6 +1,7 @@
 package org.vasttrafik.wso2.carbon.caching.impl;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -80,23 +81,23 @@ public class CustomAccessTokenCacheCheckTask implements Runnable {
           
           log.error("Problem writing tokens to Database. Number of failed attempts: " + numberOfFailedAttempts, e);
 
-          if (numberOfFailedAttempts > 3) {
+          if (numberOfFailedAttempts > 2) {
             
-            log.error("Failed to write tokens to database more than 3 times, initiating exception handling. Writing tokens to file");
+            log.error("Failed to write tokens to database more than 2 times, initiating exception handling. Writing tokens to file");
 
             SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
             sdfDate.setTimeZone(TimeZone.getTimeZone("UTC"));
             SimpleDateFormat sdfFile = new SimpleDateFormat("yyyyMMddHHmmssSSS");
             Date now = new Date();
 
-            String filePath = System.getProperty("carbon.home") + "\\" + sdfFile.format(now) + "-TOKEN-ERROR.sql";
+            String filePath = System.getProperty("carbon.home") + File.separator + sdfFile.format(now) + "-TOKEN-ERROR.sql";
 
             PrintWriter out = null;
             String oauthSql = "";
             AccessTokenDO tokenDO = null;
             AuthenticatedUser user = null;
             try {
-              out = new PrintWriter(new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(filePath)), "UTF-8"));
+              out = new PrintWriter(new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(filePath)), "UTF-8"), false);
               for (int i = 0; i < list.size(); i++) {
 
                 tokenDO = list.get(i);
@@ -131,6 +132,9 @@ public class CustomAccessTokenCacheCheckTask implements Runnable {
             log.error("Flushed token cache to disk in file: " + filePath);
 
           }
+          
+          customTokenMgtDAO = new CustomTokenMgtDAO();
+          
         }
 
       }
