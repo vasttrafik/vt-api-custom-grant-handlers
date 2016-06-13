@@ -3,7 +3,6 @@ package org.vasttrafik.wso2.carbon.apimgt.keymgt.util;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.vasttrafik.wso2.carbon.caching.impl.CustomAccessTokenCacheCheckTask;
-import org.vasttrafik.wso2.carbon.caching.impl.CustomCacheExpiryCheckTask;
 import org.vasttrafik.wso2.carbon.caching.impl.CustomAccessTokenCache;
 import org.vasttrafik.wso2.carbon.caching.impl.CustomKeyCache;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
@@ -37,8 +36,8 @@ public class CustomAPIKeyMgtUtil {
 
     customAccessTokenCacheCheckTask = new CustomAccessTokenCacheCheckTask((CacheImpl<String, AccessTokenDO>) customAccessTokenCache.getBaseCache());
     tokenCacheCheckTaskFuture = Executors.newSingleThreadScheduledExecutor(threadFactory).scheduleAtFixedRate(customAccessTokenCacheCheckTask, 10L, 10L, TimeUnit.SECONDS);
-    Executors.newSingleThreadScheduledExecutor(threadFactory).scheduleAtFixedRate(new CustomCacheExpiryCheckTask((CacheImpl<String, APIKeyValidationInfoDTO>) customKeyCache.getBaseCache()), 60L, 60L, TimeUnit.SECONDS);
-    Executors.newSingleThreadScheduledExecutor(threadFactory).scheduleAtFixedRate(new CustomCacheExpiryCheckTask((CacheImpl<String, AccessTokenDO>) customAccessTokenCache.getBaseCache()), 60L, 60L, TimeUnit.SECONDS);
+    //Executors.newSingleThreadScheduledExecutor(threadFactory).scheduleAtFixedRate(new CustomCacheExpiryCheckTask((CacheImpl<String, APIKeyValidationInfoDTO>) customKeyCache.getBaseCache()), 60L, 60L, TimeUnit.SECONDS);
+    //Executors.newSingleThreadScheduledExecutor(threadFactory).scheduleAtFixedRate(new CustomCacheExpiryCheckTask((CacheImpl<String, AccessTokenDO>) customAccessTokenCache.getBaseCache()), 60L, 60L, TimeUnit.SECONDS);
   
   }
   

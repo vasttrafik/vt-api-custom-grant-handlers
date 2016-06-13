@@ -89,6 +89,8 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
           return true;
         }
       }
+      
+      //log.info("No hit in cache for key: " + validationContext.getAccessToken());
 
       if (log.isDebugEnabled())
         log.debug("No match found in key cache cache for " + validationContext.getAccessToken() + " token, returning to normal handling");
