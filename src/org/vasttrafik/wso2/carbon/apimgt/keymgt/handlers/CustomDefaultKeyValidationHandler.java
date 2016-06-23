@@ -67,7 +67,6 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       if ((actualVersion != null) && (actualVersion.startsWith("_default_"))) {
         actualVersion = actualVersion.split("_default_")[1];
       }
-
       
       if (APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
         if (log.isDebugEnabled())
@@ -109,7 +108,13 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
             tokenInfo.setTokenValid(true);
             tokenInfo.setEndUserName(accessTokenDO.getAuthzUser().getUserName());
             tokenInfo.setConsumerKey(accessTokenDO.getConsumerKey());
-            tokenInfo.setValidityPeriod(accessTokenDO.getValidityPeriod() * 1000L);
+            
+            if(accessTokenDO.getValidityPeriod() == -2L || accessTokenDO.getValidityPeriod() == Long.MAX_VALUE) {
+            	tokenInfo.setValidityPeriod(Long.MAX_VALUE);
+            } else {
+            	tokenInfo.setValidityPeriod(accessTokenDO.getValidityPeriod() * 1000L);
+            }
+
             tokenInfo.setIssuedTime(accessTokenDO.getIssuedTime().getTime());
             tokenInfo.setScope(accessTokenDO.getScope());
             tokenInfo.setApplicationToken(true); // Always assume application token
@@ -121,7 +126,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
           }
           
         } catch (IdentityOAuth2Exception e) {
-          log.error("Error while obtaining Token Metadata from Databsse", e);
+          log.error("Error while obtaining Token Metadata from Database", e);
           throw new APIKeyMgtException("Error while obtaining Token Metadata from Database");
         }
       
@@ -142,7 +147,9 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       apiKeyValidationInfoDTO.setEndUserName(tokenInfo.getEndUserName());
       apiKeyValidationInfoDTO.setConsumerKey(tokenInfo.getConsumerKey());
       apiKeyValidationInfoDTO.setIssuedTime(tokenInfo.getIssuedTime());
-      apiKeyValidationInfoDTO.setValidityPeriod(tokenInfo.getValidityPeriod() * 1000L);
+      
+      apiKeyValidationInfoDTO.setValidityPeriod(tokenInfo.getValidityPeriod());
+      
       if (tokenInfo.getScopes() != null) {
         Set<String> scopeSet = new HashSet<String>(Arrays.asList(tokenInfo.getScopes()));
         apiKeyValidationInfoDTO.setScopes(scopeSet);

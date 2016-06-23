@@ -515,7 +515,12 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 		apiKeyValidationInfoDTO.setEndUserName(accessTokenDO.getAuthzUser().getUserName());
 		apiKeyValidationInfoDTO.setConsumerKey(accessTokenDO.getConsumerKey());
 		apiKeyValidationInfoDTO.setIssuedTime((accessTokenDO != null ? accessTokenDO.getIssuedTime().getTime() : System.currentTimeMillis()));
-		apiKeyValidationInfoDTO.setValidityPeriod(accessTokenDO.getValidityPeriod() * 1000L);
+		
+        if(accessTokenDO.getValidityPeriod() == -2L || accessTokenDO.getValidityPeriod() == Long.MAX_VALUE) {
+        	apiKeyValidationInfoDTO.setValidityPeriod(Long.MAX_VALUE);
+        } else {
+        	apiKeyValidationInfoDTO.setValidityPeriod(accessTokenDO.getValidityPeriod() * 1000L);
+        }
     
 		if (accessTokenDO.getScope() != null) {
 			Set<String> scopeSet = new HashSet<String>(Arrays.asList(accessTokenDO.getScope()));
