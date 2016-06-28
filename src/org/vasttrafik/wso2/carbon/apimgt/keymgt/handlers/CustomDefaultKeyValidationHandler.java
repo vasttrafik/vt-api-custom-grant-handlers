@@ -305,6 +305,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
           dto.setApplicationName(infoDTO.getApplicationName());
           dto.setApplicationTier(infoDTO.getApplicationTier());
           dto.setType(infoDTO.getType());
+          dto.setAuthorizedDomains(infoDTO.getAuthorizedDomains());
           
 //          if(log.isInfoEnabled()) {
 //            stopWatch.stop();
@@ -323,6 +324,8 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
          * validationContext.getTokenInfo().getConsumerKey())); checkClientDomainAuthorized(dto,
          * validationContext.getClientDomain());
          */
+    	  
+    	  dto.setAuthorizedDomains(Arrays.asList(new String[] {"ALL"})); // Allow all domains
 
         if (APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
           if (log.isDebugEnabled())
