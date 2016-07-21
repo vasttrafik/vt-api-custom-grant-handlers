@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.vasttrafik.se.api</groupId>
 	<artifactId>vt-api-custom-grant-handlers</artifactId>
-	<version>1.1.0</version>
+	<version>1.1.1	</version>
 	<name>vt-api-custom-grant-handlers</name>
 	<description>vt-api-custom-grant-handlers</description>
 	<packaging>bundle</packaging>
@@ -80,7 +80,7 @@
                        <Bundle-Vendor>Vasttrafik</Bundle-Vendor>
                        <Bundle-SymbolicName>${pom.artifactId}</Bundle-SymbolicName>
                        <Bundle-Name>${pom.artifactId}</Bundle-Name>
-                       <Bundle-Version>1.0.0</Bundle-Version>
+                       <Bundle-Version>${pom.version}</Bundle-Version>
                        <Import-Package>
                            org.osgi.framework, org.wso2.carbon.core, org.wso2.carbon.utils.*
                            *;resolution:=optional

@@ -85,6 +85,14 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
 //            log.info("validateToken 2 took: " + stopWatch.getTime() + " ms. for accesstoken: " + validationContext.getAccessToken());          
 //          }
           
+          boolean tokenExpired = APIUtil.isAccessTokenExpired(infoDTO);
+          if (tokenExpired) {
+            infoDTO.setAuthorized(false);
+            infoDTO.setValidationStatus(900901);
+            if (log.isDebugEnabled())
+              log.debug("Token " + validationContext.getAccessToken() + " expired.");
+            return false;
+          }
           return true;
         }
       }
@@ -153,6 +161,16 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       if (tokenInfo.getScopes() != null) {
         Set<String> scopeSet = new HashSet<String>(Arrays.asList(tokenInfo.getScopes()));
         apiKeyValidationInfoDTO.setScopes(scopeSet);
+      }
+      
+      
+      boolean tokenExpired = APIUtil.isAccessTokenExpired(apiKeyValidationInfoDTO);
+      if (tokenExpired) {
+    	tokenInfo.setTokenValid(false);
+    	apiKeyValidationInfoDTO.setAuthorized(false);
+    	apiKeyValidationInfoDTO.setValidationStatus(900901);
+        if (log.isDebugEnabled())
+          log.debug("Token " + validationContext.getAccessToken() + " expired.");
       }
 
       if (tokenInfo.isTokenValid() && APIKeyMgtDataHolder.getKeyCacheEnabledKeyMgt()) {
