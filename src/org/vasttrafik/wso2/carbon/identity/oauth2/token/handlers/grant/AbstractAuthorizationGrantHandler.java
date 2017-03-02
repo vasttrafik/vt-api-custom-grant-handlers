@@ -9,7 +9,6 @@ import java.util.UUID;
 
 import org.apache.axiom.util.base64.Base64Utils;
 import org.apache.commons.io.Charsets;
-//import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.as.issuer.OAuthIssuer;
@@ -81,14 +80,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 	}
 
 	public OAuth2AccessTokenRespDTO issue(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
-    
-		//StopWatch stopWatch = new StopWatch();
-		//StopWatch entireStopWatch = new StopWatch();
-		//StringBuilder builder = new StringBuilder();
-    
-		//if(log.isInfoEnabled()) {
-			//entireStopWatch.start();
-		//}
 
 		OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO = tokReqMsgCtx.getOauth2AccessTokenReqDTO();
 		
@@ -120,10 +111,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 		} else {
 			tokenType = "APPLICATION";
 		}
-    
-		//if(log.isInfoEnabled()) {
-			//stopWatch.start();
-		//}
     
 		synchronized ((consumerKey + ":" + authorizedUser + ":" + scope).intern()) {
 			if (cacheEnabled) {
@@ -175,25 +162,12 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 					}
 				}
 			}
-      
-			//if(log.isInfoEnabled()) {
-				//stopWatch.stop();
-				//builder.append("Checking cache took: " + stopWatch.getTime() + " ms. ");
-				//stopWatch.reset();
-				//stopWatch.start();
-			//}
 
 			AccessTokenDO existingAccessTokenDO = null; 
       
 			if (lookupEnabled) {
 				existingAccessTokenDO = customTokenMgtDAO.retrieveLatestAccessToken(
 						oAuth2AccessTokenReqDTO.getClientId(), tokReqMsgCtx.getAuthorizedUser(), userStoreDomain, scope, false);
-				
-				//if(log.isInfoEnabled()) {
-					//stopWatch.stop();
-					//builder.append("Checking retrieve latest access token took: " + stopWatch.getTime() + " ms \r\n");
-					//stopWatch.reset();       
-				//}
 			}
       
 			if (existingAccessTokenDO != null) {
@@ -239,7 +213,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 						if (log.isDebugEnabled()) {
 							log.debug("Access Token info was added to the cache for the cache key : " + 
 									cacheKey.getCacheKeyString() + " and " + existingAccessTokenDO.getAccessToken());
-							//log.debug("Is it possible to find value? " + this.oauthCache.getValueFromCache(new OAuthCacheKey(existingAccessTokenDO.getAccessToken())));
 						}
 					}
 					return tokenRespDTO;
@@ -273,10 +246,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 			if (callbackValidityPeriod != -1L) {
 				validityPeriodInMillis = callbackValidityPeriod * 1000L;
 			}
-
-			//if(log.isInfoEnabled()) {
-				//stopWatch.start();
-			//}
       
 			String grantType = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getGrantType();
 			String newAccessToken;
@@ -317,25 +286,12 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 			newAccessTokenDO.setTokenId(UUID.randomUUID().toString());
 			newAccessTokenDO.setGrantType(grantType);
       
-			//if(log.isInfoEnabled()) {
-				//stopWatch.stop();
-				//builder.append("Creating new access token DO took: " + stopWatch.getTime() + " ms. ");
-				//stopWatch.reset();
-				//stopWatch.start();       
-			//}
-      
 			storeAccessToken(
 					oAuth2AccessTokenReqDTO, 
 					userStoreDomain, 
 					newAccessTokenDO, 
 					newAccessToken, 
 					existingAccessTokenDO);
-      
-			//if(log.isInfoEnabled()) {
-				//stopWatch.stop();
-				//builder.append("Storing access token took: " + stopWatch.getTime() + " ms. ");
-				//stopWatch.reset();       
-			//}
       
 			if (log.isDebugEnabled()) {
 				log.debug("Persisted Access Token for Client ID : " + oAuth2AccessTokenReqDTO.getClientId() + 
@@ -344,27 +300,13 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 			}
       
 			if (this.cacheEnabled) { 
-				//if(log.isInfoEnabled())
-					//stopWatch.start();
         
 				oauthCache.addToCache(cacheKey, newAccessTokenDO);
-        
-				//if(log.isInfoEnabled()) {
-					//stopWatch.stop();
-					//builder.append("Putting the access token DO object in oAuthCache took: " + stopWatch.getTime() + " ms. ");
-					//stopWatch.reset();
-					//stopWatch.start();
-				//}
         
 				/* Make it possible to lookup TokenDO from Token value */
 				CustomAPIKeyMgtUtil.writeToCustomKeyManagerCache(
 						newAccessTokenDO.getAccessToken(), 
 						this.convertAccesstokenDOToAPIKeyValidationInfoDTO(newAccessTokenDO));
-
-				//if(log.isInfoEnabled()) {
-					//stopWatch.stop();
-					//builder.append("Putting the APIKeyValidationInfoDTO object in key cache took: " + stopWatch.getTime() + " ms. Size: " );
-				//}
 
 				if (log.isDebugEnabled()) {
 					log.debug("Access token was added to OAuthCache for cache key : " + cacheKey.getCacheKeyString() + " and " + newAccessTokenDO.getAccessToken());
@@ -386,12 +328,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 			}
       
 			tokenRespDTO.setAuthorizedScopes(scope);
-      
-			//if(log.isInfoEnabled()) {
-				//entireStopWatch.stop();
-				//builder.append("Entire invocation took: " + entireStopWatch.getTime() + " ms. for scope: " + scope);
-				//log.info(builder.toString());
-			//}
       
 			return tokenRespDTO;
 		}

@@ -35,8 +35,6 @@ public class CustomKeyCache
       }
     }
     
-    //log.info("Custom key cache initiated with capacity: " + instance.getCapacity() + " and timeout: " + instance.getCacheTimeout());
-    
     return instance;
   }
 }

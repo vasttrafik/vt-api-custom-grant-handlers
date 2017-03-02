@@ -36,8 +36,6 @@ public class CustomOAuthCache
       }
     }
     
-    //log.info("Custom oauth cache initiated with capacity: " + instance.getCapacity() + " and timeout: " + instance.getCacheTimeout());
-    
     return instance;
   }
 }
