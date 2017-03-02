@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import org.apache.axiom.util.base64.Base64Utils;
 import org.apache.commons.io.Charsets;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.as.issuer.OAuthIssuer;
@@ -465,4 +466,28 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     
 		return apiKeyValidationInfoDTO; 
 	}
+	
+	  public boolean isAuthorizedClient(OAuthTokenReqMessageContext tokReqMsgCtx)
+			    throws IdentityOAuth2Exception
+			  {
+			    OAuth2AccessTokenReqDTO tokenReqDTO = tokReqMsgCtx.getOauth2AccessTokenReqDTO();
+			    String grantType = tokenReqDTO.getGrantType();
+			    
+			    OAuthAppDO oAuthAppDO = (OAuthAppDO)tokReqMsgCtx.getProperty("OAuthAppDO");
+			    if (StringUtils.isBlank(oAuthAppDO.getGrantTypes()))
+			    {
+			      if (log.isDebugEnabled()) {
+			        log.debug("Could not find authorized grant types for client id: " + tokenReqDTO.getClientId());
+			      }
+			      return false;
+			    }
+			    if (!oAuthAppDO.getGrantTypes().contains(grantType))
+			    {
+			      if (log.isDebugEnabled()) {
+			        log.debug("Unsupported Grant Type : " + grantType + " for client id : " + tokenReqDTO.getClientId());
+			      }
+			      return false;
+			    }
+			    return true;
+			  }
 }

@@ -12,7 +12,7 @@ import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.APIKeyValidationInfoDTO;
-import org.wso2.carbon.apimgt.impl.token.TokenGenerator;
+import org.wso2.carbon.apimgt.keymgt.token.TokenGenerator;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.APIKeyMgtException;
 import org.wso2.carbon.apimgt.keymgt.handlers.AbstractKeyValidationHandler;
@@ -28,7 +28,7 @@ import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeValidator;
 public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHandler {
   private static final Log log = LogFactory.getLog(CustomDefaultKeyValidationHandler.class);
 
-  private ApiMgtDAO dao = new ApiMgtDAO();
+  private ApiMgtDAO dao = ApiMgtDAO.getInstance();
   private TokenMgtDAO tokenMgtDAO = null;
 
   public CustomDefaultKeyValidationHandler() {
@@ -42,8 +42,15 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
 
     if (validationContext.isCacheHit()) {
       APIKeyValidationInfoDTO infoDTO = validationContext.getValidationInfoDTO();
-
-      checkClientDomainAuthorized(infoDTO, validationContext.getClientDomain());
+      
+      // This block checks if a Token of Application Type is trying to access a resource protected with
+      // Application Token
+      if (!hasTokenRequiredAuthLevel(validationContext.getRequiredAuthenticationLevel(), validationContext.getTokenInfo())) {
+          infoDTO.setAuthorized(false);
+          infoDTO.setValidationStatus(APIConstants.KeyValidationStatus.API_AUTH_INCORRECT_ACCESS_TOKEN_TYPE);
+          return false;
+      }
+      
       boolean tokenExpired = APIUtil.isAccessTokenExpired(infoDTO);
       if (tokenExpired) {
         infoDTO.setAuthorized(false);
@@ -311,14 +318,6 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
     return state;
   }
 
-  protected void checkClientDomainAuthorized(APIKeyValidationInfoDTO apiKeyValidationInfoDTO, String clientDomain) throws APIKeyMgtException {
-    try {
-      APIUtil.checkClientDomainAuthorized(apiKeyValidationInfoDTO, clientDomain);
-    } catch (APIManagementException e) {
-      log.error("Error while validating client domain", e);
-    }
-  }
-
   protected void setTokenType(AccessTokenInfo tokenInfo) {}
 
   protected boolean hasTokenRequiredAuthLevel(String authScheme, AccessTokenInfo tokenInfo) {
@@ -341,8 +340,7 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
       TokenGenerator generator = APIKeyMgtDataHolder.getTokenGenerator();
       try
       {
-        String jwt = generator.generateToken(validationContext.getValidationInfoDTO(), validationContext.getContext(), validationContext.getVersion(), validationContext.getAccessToken());
-        
+    	String jwt = generator.generateToken(validationContext);
         validationContext.getValidationInfoDTO().setEndUserToken(jwt);
         
         return true;
