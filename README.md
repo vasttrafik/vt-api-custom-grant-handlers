@@ -24,3 +24,7 @@ To use the key validation handler replace the specified handler class in <WSO2_H
 ```
 <KeyValidationHandlerClassName>org.vasttrafik.wso2.carbon.apimgt.keymgt.handlers.CustomDefaultKeyValidationHandler</KeyValidationHandlerClassName>
 ```
+
+## Installation
+
+Place the target jar file in <WSO2_HOME>/repository/components/dropins
