@@ -43,14 +43,6 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
     if (validationContext.isCacheHit()) {
       APIKeyValidationInfoDTO infoDTO = validationContext.getValidationInfoDTO();
       
-      // This block checks if a Token of Application Type is trying to access a resource protected with
-      // Application Token
-      if (!hasTokenRequiredAuthLevel(validationContext.getRequiredAuthenticationLevel(), validationContext.getTokenInfo())) {
-          infoDTO.setAuthorized(false);
-          infoDTO.setValidationStatus(APIConstants.KeyValidationStatus.API_AUTH_INCORRECT_ACCESS_TOKEN_TYPE);
-          return false;
-      }
-      
       boolean tokenExpired = APIUtil.isAccessTokenExpired(infoDTO);
       if (tokenExpired) {
         infoDTO.setAuthorized(false);
@@ -179,60 +171,62 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
     return tokenInfo.isTokenValid();
   }
 
+  @Override
   public boolean validateScopes(TokenValidationContext validationContext) throws APIKeyMgtException {
-    
-    if (validationContext.isCacheHit()) {
-      return true;
-    }
-    OAuth2ScopeValidator scopeValidator = OAuthServerConfiguration.getInstance().getoAuth2ScopeValidator();
+	    
+	    if (validationContext.isCacheHit()) {
+	      return true;
+	    }
+	    OAuth2ScopeValidator scopeValidator = OAuthServerConfiguration.getInstance().getoAuth2ScopeValidator();
 
-    APIKeyValidationInfoDTO apiKeyValidationInfoDTO = validationContext.getValidationInfoDTO();
-    if (apiKeyValidationInfoDTO == null) {
-      throw new APIKeyMgtException("Key Validation information not set");
-    }
-    String[] scopes = null;
-    Set<String> scopesSet = apiKeyValidationInfoDTO.getScopes();
-    if ((scopesSet != null) && (!scopesSet.isEmpty())) {
-      scopes = (String[]) scopesSet.toArray(new String[scopesSet.size()]);
-      if ((log.isDebugEnabled()) && (scopes != null)) {
-        StringBuffer scopeList = new StringBuffer();
-        for (String scope : scopes) {
-          scopeList.append(scope + ",");
-        }
-        scopeList.deleteCharAt(scopeList.length() - 1);
-        if (log.isDebugEnabled())
-          log.debug("Scopes allowed for token : " + validationContext.getAccessToken() + " : " + scopeList.toString());
-      }
-    }
-    AuthenticatedUser user = new AuthenticatedUser();
-    user.setUserName(apiKeyValidationInfoDTO.getEndUserName());
-    AccessTokenDO accessTokenDO = new AccessTokenDO(apiKeyValidationInfoDTO.getConsumerKey(), user, scopes, null, null, apiKeyValidationInfoDTO.getValidityPeriod(),
-        apiKeyValidationInfoDTO.getValidityPeriod(), apiKeyValidationInfoDTO.getType());
+	    APIKeyValidationInfoDTO apiKeyValidationInfoDTO = validationContext.getValidationInfoDTO();
+	    if (apiKeyValidationInfoDTO == null) {
+	      throw new APIKeyMgtException("Key Validation information not set");
+	    }
+	    String[] scopes = null;
+	    Set<String> scopesSet = apiKeyValidationInfoDTO.getScopes();
+	    if ((scopesSet != null) && (!scopesSet.isEmpty())) {
+	      scopes = (String[]) scopesSet.toArray(new String[scopesSet.size()]);
+	      if ((log.isDebugEnabled()) && (scopes != null)) {
+	        StringBuffer scopeList = new StringBuffer();
+	        for (String scope : scopes) {
+	          scopeList.append(scope + ",");
+	        }
+	        scopeList.deleteCharAt(scopeList.length() - 1);
+	        if (log.isDebugEnabled())
+	          log.debug("Scopes allowed for token : " + validationContext.getAccessToken() + " : " + scopeList.toString());
+	      }
+	    }
+	    AuthenticatedUser user = new AuthenticatedUser();
+	    user.setUserName(apiKeyValidationInfoDTO.getEndUserName());
+	    AccessTokenDO accessTokenDO = new AccessTokenDO(apiKeyValidationInfoDTO.getConsumerKey(), user, scopes, null, null, apiKeyValidationInfoDTO.getValidityPeriod(),
+	        apiKeyValidationInfoDTO.getValidityPeriod(), apiKeyValidationInfoDTO.getType());
 
-    accessTokenDO.setAccessToken(validationContext.getAccessToken());
+	    accessTokenDO.setAccessToken(validationContext.getAccessToken());
 
-    String actualVersion = validationContext.getVersion();
-    if ((actualVersion != null) && (actualVersion.startsWith("_default_"))) {
-      actualVersion = actualVersion.split("_default_")[1];
-    }
-    String resource = validationContext.getContext() + "/" + actualVersion + validationContext.getMatchingResource() + ":" + validationContext.getHttpVerb();
-    try {
-      if (scopeValidator != null) {
-        if (scopeValidator.validateScope(accessTokenDO, resource)) {
-          
-          return true;
-        }
-        apiKeyValidationInfoDTO.setAuthorized(false);
-        apiKeyValidationInfoDTO.setValidationStatus(900910);
-      }
-    } catch (IdentityOAuth2Exception e) {
-      log.error("ERROR while validating token scope " + e.getMessage());
-      apiKeyValidationInfoDTO.setAuthorized(false);
-      apiKeyValidationInfoDTO.setValidationStatus(900910);
-    }
-    
-    return false;
-  }
+	    String actualVersion = validationContext.getVersion();
+	    if ((actualVersion != null) && (actualVersion.startsWith("_default_"))) {
+	      actualVersion = actualVersion.split("_default_")[1];
+	    }
+	    String resource = validationContext.getContext() + "/" + actualVersion + validationContext.getMatchingResource() + ":" + validationContext.getHttpVerb();
+
+	    try {
+	      if (scopeValidator != null) {
+	        if (scopeValidator.validateScope(accessTokenDO, resource)) {
+	          
+	          return true;
+	        }
+	        apiKeyValidationInfoDTO.setAuthorized(false);
+	        apiKeyValidationInfoDTO.setValidationStatus(900910);
+	      }
+	    } catch (IdentityOAuth2Exception e) {
+	      log.error("ERROR while validating token scope " + e.getMessage());
+	      apiKeyValidationInfoDTO.setAuthorized(false);
+	      apiKeyValidationInfoDTO.setValidationStatus(900910);
+	    }
+	    
+	    return false;
+	  }
 
   public boolean validateSubscription(TokenValidationContext validationContext) throws APIKeyMgtException {
     
