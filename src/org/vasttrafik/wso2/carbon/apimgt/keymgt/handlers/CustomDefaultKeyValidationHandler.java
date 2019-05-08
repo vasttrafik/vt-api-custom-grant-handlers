@@ -71,6 +71,9 @@ public class CustomDefaultKeyValidationHandler extends AbstractKeyValidationHand
           if (log.isDebugEnabled())
             log.debug("Found API Key Validation Info DTO in key cache, returning");
 
+          infoDTO.setAuthorized(true);
+          infoDTO.setValidationStatus(0);
+          
           validationContext.setValidationInfoDTO(infoDTO);
           
           boolean tokenExpired = APIUtil.isAccessTokenExpired(infoDTO);
